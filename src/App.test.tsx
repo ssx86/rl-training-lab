@@ -30,6 +30,7 @@ describe("Q-learning Lab", () => {
 
     expect(screen.getAllByText("算法待实现")).toHaveLength(2);
     expect(screen.getByTestId("episode-step")).toHaveTextContent("1");
+    expect(document.querySelectorAll('[data-highlight="true"]')).toHaveLength(1);
   });
 
   it("switches to exploitation without modifying the Q table", async () => {

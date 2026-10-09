@@ -10,34 +10,51 @@ import {
 } from "@/domain/cliff-walking";
 import { cn } from "@/lib/utils";
 
-const ACTION_META: Record<Action, { symbol: string; position: string; clipPath: string }> = {
+type HeatLevel = "neutral" | "best" | "good" | "weak" | "worst";
+
+const ACTION_META: Record<Action, { symbol: string; position: string; heatPosition: string }> = {
   [ACTIONS.UP]: {
     symbol: "↑",
     position: "left-1/2 top-0.5 -translate-x-1/2",
-    clipPath: "polygon(0 0, 100% 0, 50% 50%)",
+    heatPosition: "left-0 right-0 top-0 h-1/4 md:left-[22%] md:right-[22%] md:h-[30%] md:rounded-b-[4px]",
   },
   [ACTIONS.RIGHT]: {
     symbol: "→",
-    position: "right-0.5 top-1/2 -translate-y-1/2",
-    clipPath: "polygon(100% 0, 100% 100%, 50% 50%)",
+    position: "left-1/2 top-[26%] -translate-x-1/2 md:left-auto md:right-0.5 md:top-[26%] md:translate-x-0 md:-translate-y-1/2",
+    heatPosition: "left-0 right-0 top-1/4 h-1/4 md:bottom-[22%] md:left-auto md:right-0 md:top-[22%] md:h-auto md:w-[30%] md:rounded-l-[4px]",
   },
   [ACTIONS.DOWN]: {
     symbol: "↓",
-    position: "bottom-0.5 left-1/2 -translate-x-1/2",
-    clipPath: "polygon(0 100%, 100% 100%, 50% 50%)",
+    position: "left-1/2 top-[51%] -translate-x-1/2 md:bottom-0.5 md:top-auto",
+    heatPosition: "left-0 right-0 top-1/2 h-1/4 md:bottom-0 md:left-[22%] md:right-[22%] md:top-auto md:h-[30%] md:rounded-t-[4px]",
   },
   [ACTIONS.LEFT]: {
     symbol: "←",
-    position: "left-0.5 top-1/2 -translate-y-1/2",
-    clipPath: "polygon(0 0, 0 100%, 50% 50%)",
+    position: "bottom-0.5 left-1/2 -translate-x-1/2 md:bottom-auto md:left-0.5 md:top-[74%] md:translate-x-0 md:-translate-y-1/2",
+    heatPosition: "bottom-0 left-0 right-0 h-1/4 md:bottom-[22%] md:right-auto md:top-[22%] md:h-auto md:w-[30%] md:rounded-r-[4px]",
   },
 };
+
+const HEAT_COLORS: Record<HeatLevel, string> = {
+  neutral: "rgba(226, 232, 240, 0.72)",
+  best: "rgba(220, 38, 38, 0.62)",
+  good: "rgba(251, 146, 60, 0.56)",
+  weak: "rgba(147, 197, 253, 0.58)",
+  worst: "rgba(37, 99, 235, 0.62)",
+};
+
+export interface QUpdateHighlight {
+  state: number;
+  action: Action;
+  version: number;
+}
 
 interface EnvironmentGridProps {
   currentState: number;
   selectedState: number;
   path: number[];
   qMatrix: number[][];
+  lastQUpdate?: QUpdateHighlight;
   greedyActions: (state: number) => Action[];
   onSelectState: (state: number) => void;
 }
@@ -47,11 +64,10 @@ export function EnvironmentGrid({
   selectedState,
   path,
   qMatrix,
+  lastQUpdate,
   greedyActions,
   onSelectState,
 }: EnvironmentGridProps) {
-  const { minimumQ, maximumQ } = qRange(qMatrix);
-
   return (
     <div>
       <div
@@ -83,6 +99,7 @@ export function EnvironmentGrid({
               className={cn(
                 "relative grid min-h-11 place-items-center overflow-hidden rounded-[6px] border bg-[#f8faf8] text-muted-foreground transition-colors sm:min-h-14",
                 visited && "shadow-[inset_0_0_0_1px_rgba(217,119,6,0.28)]",
+                active && "border-primary ring-2 ring-primary",
                 selected && "border-primary ring-1 ring-primary",
                 cliff && "cursor-not-allowed border-[#2f3432] bg-[#2f3432] text-white",
                 goal && "border-success bg-[#e9f5ef] text-success",
@@ -92,19 +109,26 @@ export function EnvironmentGrid({
                 const action = actionIndex as Action;
                 const meta = ACTION_META[action];
                 const greedy = actions.includes(action);
+                const heatLevel = qHeatLevel(value, qValues);
+                const highlighted = lastQUpdate?.state === state && lastQUpdate.action === action;
                 return (
-                  <span key={action}>
+                  <span key={`${action}-${highlighted ? lastQUpdate.version : "stable"}`}>
                     <span
                       aria-hidden
-                      className="absolute inset-0 transition-colors duration-200"
-                      style={{
-                        backgroundColor: qHeatColor(value, minimumQ, maximumQ),
-                        clipPath: meta.clipPath,
-                      }}
+                      data-testid={`q-heat-${action}`}
+                      data-heat={heatLevel}
+                      data-highlight={highlighted ? "true" : undefined}
+                      data-update-version={highlighted ? lastQUpdate.version : undefined}
+                      className={cn(
+                        "absolute transition-colors duration-200",
+                        meta.heatPosition,
+                        highlighted && "q-heat-flash",
+                      )}
+                      style={{ backgroundColor: HEAT_COLORS[heatLevel] }}
                     />
                     <span
                       className={cn(
-                        "absolute z-10 whitespace-nowrap font-mono text-[7px] leading-none tracking-[-0.06em] text-[#4f5a55] sm:text-[8px] 2xl:text-[9px]",
+                        "absolute z-10 whitespace-nowrap rounded-[2px] bg-white/80 px-px py-[1px] font-mono text-[7px] leading-none tracking-[-0.06em] text-[#37413c] shadow-[0_0_0_1px_rgba(255,255,255,0.45)] sm:text-[8px] 2xl:text-[9px]",
                         meta.position,
                         greedy && "font-bold text-foreground",
                       )}
@@ -122,11 +146,14 @@ export function EnvironmentGrid({
               )}>{state}</span>
 
               {active && !cliff && !goal ? (
-                <span className="relative z-10 grid size-4 place-items-center rounded-full bg-white/90 ring-1 ring-primary sm:size-5">
-                  <PersonSimpleRun aria-hidden size={13} weight="fill" className="text-primary sm:size-[15px]" />
+                <span
+                  data-testid="agent-marker"
+                  className="absolute left-1/2 top-1/2 z-20 hidden size-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white ring-1 ring-primary md:grid"
+                >
+                  <PersonSimpleRun aria-hidden size={11} weight="fill" className="text-primary" />
                 </span>
               ) : start ? (
-                <span className="relative z-10 font-mono text-[8px] font-bold text-foreground">S</span>
+                <span className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-mono text-[8px] font-bold text-foreground">S</span>
               ) : goal ? (
                 <span className="relative z-10 flex items-center gap-1 font-medium" title="终点">
                   <Flag size={13} weight="fill" />
@@ -135,7 +162,7 @@ export function EnvironmentGrid({
               ) : cliff ? (
                 <span className="hidden font-medium sm:inline">悬崖</span>
               ) : (
-                <span className="relative z-10 font-mono text-[7px] font-semibold text-foreground/55 sm:text-[8px]">
+                <span className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-mono text-[7px] font-semibold text-foreground/55 sm:text-[8px]">
                   {state}
                 </span>
               )}
@@ -147,39 +174,31 @@ export function EnvironmentGrid({
         <span>琥珀色图标：智能体</span>
         <span>深色区域：悬崖，奖励 -100</span>
         <span>普通移动：奖励 -1</span>
-        <span className="inline-flex items-center gap-1.5 font-mono">
-          低 {formatCompactQ(minimumQ)}
-          <span className="size-2 rounded-[2px] bg-[rgba(182,70,58,0.36)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(182,70,58,0.18)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(102,112,107,0.12)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(217,119,6,0.18)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(217,119,6,0.36)]" />
-          {formatCompactQ(maximumQ)} 高
+        <span className="inline-flex items-center gap-1.5">
+          格内相对：低
+          <span className="size-2 rounded-[2px] bg-[rgba(37,99,235,0.62)]" />
+          <span className="size-2 rounded-[2px] bg-[rgba(147,197,253,0.58)]" />
+          <span className="size-2 rounded-[2px] bg-[rgba(251,146,60,0.56)]" />
+          <span className="size-2 rounded-[2px] bg-[rgba(220,38,38,0.62)]" />
+          优
+          <span className="ml-1 size-2 rounded-[2px] bg-[rgba(226,232,240,0.72)]" />
+          等值
         </span>
       </div>
     </div>
   );
 }
 
-function qRange(qMatrix: number[][]) {
-  const reachableValues = qMatrix.flatMap((values, state) =>
-    isCliffState(state) || state === GOAL_STATE ? [] : values,
-  );
-  return {
-    minimumQ: Math.min(...reachableValues, 0),
-    maximumQ: Math.max(...reachableValues, 0),
-  };
-}
+function qHeatLevel(value: number, values: number[]): HeatLevel {
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  if (minimum === maximum) return "neutral";
 
-function qHeatColor(value: number, minimumQ: number, maximumQ: number) {
-  if (minimumQ === maximumQ) return "rgba(102, 112, 107, 0.12)";
-
-  const ratio = (value - minimumQ) / (maximumQ - minimumQ);
-  if (ratio <= 0.2) return "rgba(182, 70, 58, 0.36)";
-  if (ratio <= 0.4) return "rgba(182, 70, 58, 0.18)";
-  if (ratio <= 0.6) return "rgba(102, 112, 107, 0.12)";
-  if (ratio <= 0.8) return "rgba(217, 119, 6, 0.18)";
-  return "rgba(217, 119, 6, 0.36)";
+  const ratio = (value - minimum) / (maximum - minimum);
+  if (ratio >= 0.75) return "best";
+  if (ratio >= 0.5) return "good";
+  if (ratio >= 0.25) return "weak";
+  return "worst";
 }
 
 function formatCompactQ(value: number) {
