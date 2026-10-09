@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 describe("Q-learning Lab", () => {
@@ -29,6 +29,17 @@ describe("Q-learning Lab", () => {
     await user.click(screen.getByRole("tab", { name: "利用模式" }));
 
     expect(screen.getByText("只读取当前 Q 表，不写入数值")).toBeInTheDocument();
+  });
+
+  it("keeps advancing while continuous running is active", () => {
+    vi.useFakeTimers();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "连续运行" }));
+    act(() => vi.advanceTimersByTime(800));
+
+    expect(Number(screen.getByTestId("episode-step").textContent)).toBeGreaterThan(1);
+    vi.useRealTimers();
   });
 });
 

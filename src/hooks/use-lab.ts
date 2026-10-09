@@ -111,8 +111,8 @@ export function useLab() {
 
   useEffect(() => {
     if (!running) return;
-    const timer = window.setTimeout(advance, Math.max(16, parameters.speedMs));
-    return () => window.clearTimeout(timer);
+    const timer = window.setInterval(advance, Math.max(16, parameters.speedMs));
+    return () => window.clearInterval(timer);
   }, [advance, parameters.speedMs, running]);
 
   const setMode = useCallback(
