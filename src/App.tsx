@@ -52,7 +52,7 @@ export function App() {
                 <PlaybackControls running={lab.running} onStep={lab.advance} onRunEpisode={lab.runEpisode} onToggleContinuous={lab.toggleContinuous} onReset={lab.reset} />
               </CardHeader>
               <CardContent>
-                <EnvironmentGrid currentState={lab.currentState} selectedState={lab.selectedState} path={lab.path} greedyActions={lab.greedyActions} onSelectState={lab.setSelectedState} />
+                <EnvironmentGrid currentState={lab.currentState} selectedState={lab.selectedState} path={lab.path} qMatrix={lab.qMatrix} greedyActions={lab.greedyActions} onSelectState={lab.setSelectedState} />
               </CardContent>
             </Card>
 

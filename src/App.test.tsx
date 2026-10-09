@@ -12,6 +12,16 @@ describe("Q-learning Lab", () => {
     expect(screen.getByRole("gridcell", { name: /终点/ })).toBeInTheDocument();
   });
 
+  it("shows four compact one-decimal Q values in each reachable cell", () => {
+    render(<App />);
+
+    const startCell = screen.getByRole("gridcell", { name: /状态 36.*起点/ });
+    expect(startCell).toHaveTextContent("↑0.0");
+    expect(startCell).toHaveTextContent("→0.0");
+    expect(startCell).toHaveTextContent("↓0.0");
+    expect(startCell).toHaveTextContent("←0.0");
+  });
+
   it("advances one transition without implementing the learning formula", async () => {
     const user = userEvent.setup();
     render(<App />);
