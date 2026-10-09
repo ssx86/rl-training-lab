@@ -1,0 +1,34 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import { App } from "./App";
+
+describe("Q-learning Lab", () => {
+  it("renders the 48-cell Cliff Walking environment", () => {
+    render(<App />);
+
+    expect(screen.getAllByTestId("grid-cell")).toHaveLength(48);
+    expect(screen.getByRole("gridcell", { name: /起点/ })).toBeInTheDocument();
+    expect(screen.getByRole("gridcell", { name: /终点/ })).toBeInTheDocument();
+  });
+
+  it("advances one transition without implementing the learning formula", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "单步" }));
+
+    expect(screen.getAllByText("算法待实现")).toHaveLength(2);
+    expect(screen.getByTestId("episode-step")).toHaveTextContent("1");
+  });
+
+  it("switches to exploitation without modifying the Q table", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("tab", { name: "利用模式" }));
+
+    expect(screen.getByText("只读取当前 Q 表，不写入数值")).toBeInTheDocument();
+  });
+});
+
