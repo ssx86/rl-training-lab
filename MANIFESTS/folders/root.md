@@ -1,4 +1,9 @@
-# qlearning/ 根目录文件（18）
+# qlearning/ 根目录文件（19）
+
+### AGENTS.md
+- 职责: 代理立法文件——四件套（Project Focus 焦点与边界 / Structure Contract 结构契约指向 MANIFESTS/INDEX.md / File Hygiene Rules 卫生法 / Last Audit 指针）。
+- 关键: 焦点=浏览器端可运行 RL 实验台（rl-guide 只链接不编辑）；卫生法来自 2026-10-13 审计类别（SSOT 引用同提交清理、换路必清旧路、一次性残留当场删、无游离文件、删除留墓碑）；~70 行。
+- lastRead: 5f1ef8e (2026-10-14)
 
 ### .gitignore
 - 职责: Vite/React 标准忽略规则。

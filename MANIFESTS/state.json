@@ -1,11 +1,11 @@
 {
- "generatedAt": "2026-10-13T15:39:19.764Z",
- "head": "881392727714cb73c88305fe5e209346d3e01a74",
+ "generatedAt": "2026-10-13T16:06:49.355Z",
+ "head": "5f1ef8e2105d1bc8d21073095bf59c8b85367541",
  "root": "D:\\workspace\\reinforcement-learning\\qlearning",
- "fileCount": 162,
+ "fileCount": 163,
  "countsByTopDir": {
   ".github": 1,
-  "(root)": 18,
+  "(root)": 19,
   "docs": 2,
   "scripts": 1,
   "skills": 1,
@@ -40,6 +40,18 @@
    "lastReadHash": "4e972b8a8144e62f50cb92989e9c2990499bfcacabee0eb2d9da7cd3f5599660",
    "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
    "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "AGENTS.md": {
+   "size": 3804,
+   "mtime": 1791907580364,
+   "sha": "c9c4c45cd1f76484a0363a78a39658725ee47a0e5dd848dbb3e0cc51dc951303",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "c9c4c45cd1f76484a0363a78a39658725ee47a0e5dd848dbb3e0cc51dc951303",
+   "lastReadCommit": "5f1ef8e2105d1bc8d21073095bf59c8b85367541",
+   "lastReadAt": "2026-10-13T16:06:49.355Z",
+   "lastReadSize": 3804,
+   "lastReadMtime": 1791907580364
   },
   "CHANGELOG.md": {
    "size": 1046,
