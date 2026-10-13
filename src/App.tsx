@@ -1,85 +1,64 @@
-import { Brain, CheckCircle, Flask, WarningCircle } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
+import { CheckCircle, Function, Path, WarningCircle } from "@phosphor-icons/react";
+import { AppShell } from "@/components/app-shell";
+import { AlgorithmLearningPanel } from "@/components/algorithm-learning-panel";
 import { DataWorkbench } from "@/components/data-workbench";
+import { DqnDrivingLab } from "@/components/driving/dqn-driving-lab";
+import { DrivingLab } from "@/components/driving/driving-lab";
 import { EnvironmentGrid } from "@/components/environment-grid";
 import { MetricsPanel } from "@/components/metrics-panel";
 import { ParameterPanel } from "@/components/parameter-panel";
 import { PlaybackControls } from "@/components/playback-controls";
+import { Subject2Lab } from "@/components/subject2/subject2-lab";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { labHref, type LabId } from "@/domain/lab-registry";
+import { useLabRoute } from "@/hooks/use-lab-route";
 import { useLab, type LabMode } from "@/hooks/use-lab";
-import { useTensorFlowStatus } from "@/hooks/use-tensorflow-status";
 
 export function App() {
-  const lab = useLab();
-  const tensorflow = useTensorFlowStatus();
-
-  return (
-    <main className="min-h-[100dvh] bg-background text-foreground">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-control bg-accent text-primary"><Flask size={22} weight="fill" /></div>
-            <div><h1 className="text-lg font-semibold tracking-tight">Q-learning Lab</h1><p className="text-xs text-muted-foreground">悬崖行走实时实验台</p></div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge className="bg-[#eef6f1] text-success"><CheckCircle size={14} />环境已验证</Badge>
-            <Badge className="bg-accent text-[#9a5505]"><WarningCircle size={14} />算法待实现</Badge>
-            <Badge className="font-mono text-muted-foreground">TensorFlow.js {tensorflow.state === "ready" ? `${tensorflow.version} / ${tensorflow.backend}` : tensorflow.state === "error" ? "加载失败" : "加载中"}</Badge>
-          </div>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-[1600px] p-4 sm:p-6">
-        <section className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-panel border bg-card p-3">
-          <Tabs value={lab.mode} onValueChange={(value) => lab.setMode(value as LabMode)}>
-            <TabsList>
-              <TabsTrigger value="training">训练模式</TabsTrigger>
-              <TabsTrigger value="exploitation">利用模式</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <p className="text-xs text-muted-foreground">{lab.mode === "training" ? "按 epsilon-greedy 选择动作，并调用你的 Q 值更新函数" : "只读取当前 Q 表，不写入数值"}</p>
-          <div className="font-mono text-xs" aria-live="polite">{lab.running ? "运行中" : "已暂停"} / episode {lab.episode}</div>
-        </section>
-
-        <div className="grid items-start gap-4 xl:grid-cols-[260px_minmax(0,1fr)_300px]">
-          <aside className="order-2 xl:order-1"><ParameterPanel parameters={lab.parameters} disabled={lab.running} onChange={lab.updateParameter} /></aside>
-
-          <div className="order-1 space-y-4 xl:order-2">
-            <Card className="shadow-[0_10px_30px_rgba(28,39,34,0.06)]">
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-                <div><h2 className="text-sm font-semibold">环境画布</h2><p className="mt-1 text-xs text-muted-foreground">点击安全格查看对应 Q 值</p></div>
-                <PlaybackControls running={lab.running} onStep={lab.advance} onRunEpisode={lab.runEpisode} onToggleContinuous={lab.toggleContinuous} onReset={lab.reset} />
-              </CardHeader>
-              <CardContent>
-                <EnvironmentGrid
-                  currentState={lab.currentState}
-                  selectedState={lab.selectedState}
-                  path={lab.path}
-                  qMatrix={lab.qMatrix}
-                  lastQUpdate={lab.lastStep && lab.lastStep.newQ !== lab.lastStep.oldQ ? {
-                    state: lab.lastStep.state,
-                    action: lab.lastStep.action,
-                    version: lab.totalSteps,
-                  } : undefined}
-                  greedyActions={lab.greedyActions}
-                  onSelectState={lab.setSelectedState}
-                />
-              </CardContent>
-            </Card>
-
-            <section className="flex items-start gap-3 rounded-panel border border-[#eed4a9] bg-accent p-4 text-sm">
-              <Brain className="mt-0.5 shrink-0 text-primary" size={20} />
-              <div><h2 className="font-semibold">算法待实现</h2><p className="mt-1 text-xs leading-5 text-[#725834]">当前会播放环境、探索和利用过程，但 Q 值保持不变。请在 <code className="rounded bg-white/70 px-1 py-0.5 font-mono">src/exercise/update-q-value.ts</code> 中完成更新逻辑。</p></div>
-            </section>
-          </div>
-
-          <aside className="order-3"><MetricsPanel episode={lab.episode} totalSteps={lab.totalSteps} totalFalls={lab.totalFalls} successCount={lab.successCount} epsilon={lab.parameters.epsilon} lastStep={lab.lastStep} /></aside>
-        </div>
-
-        <div className="mt-4"><DataWorkbench selectedState={lab.selectedState} qMatrix={lab.qMatrix} history={lab.history} greedyActions={lab.greedyActions} /></div>
-      </div>
-    </main>
-  );
+  const labId = useLabRoute();
+  useEffect(() => {
+    const titles: Record<LabId, string> = {
+      "q-learning": "Q-learning 峡谷 · RL 训练实验室",
+      "dqn-driving": "DQN 单车 · RL 训练实验室",
+      "td3-fleet": "TD3 城市车队 · RL 训练实验室",
+      "subject-2": "TD3 科目二 · RL 训练实验室",
+    };
+    document.title = labId ? titles[labId] : "实验不存在 · RL 训练实验室";
+  }, [labId]);
+  return <AppShell activeLab={labId}>{labId ? <LabPage key={labId} labId={labId} /> : <UnknownLab />}</AppShell>;
 }
 
+function LabPage({ labId }: { labId: LabId }) {
+  if (labId === "subject-2") return <Subject2Lab />;
+  if (labId === "dqn-driving") return <><AlgorithmLearningPanel algorithmId="dqn" /><DqnDrivingLab /></>;
+  if (labId === "td3-fleet") return <><AlgorithmLearningPanel algorithmId="td3" /><DrivingLab /></>;
+  return <QLearningLab />;
+}
+
+function UnknownLab() {
+  return <section className="mx-auto max-w-[760px] px-4 py-20 text-center sm:px-6"><p className="font-mono text-xs text-primary">404 · UNKNOWN LAB</p><h2 className="mt-3 text-2xl font-semibold">找不到这个训练实验</h2><p className="mt-3 text-sm text-muted-foreground">链接可能已过期。你可以从上方主菜单选择实验，或回到默认的科目二训练。</p><a href={labHref("subject-2")} className="mt-6 inline-flex rounded-control bg-primary px-4 py-2 text-sm font-medium text-white">返回科目二</a></section>;
+}
+
+function QLearningLab() {
+  const lab = useLab();
+  const algorithmReady = lab.lastStep?.implemented === true;
+  return <>
+    <AlgorithmLearningPanel algorithmId="q-learning" />
+    <div className="mx-auto max-w-[1680px] p-4 sm:p-6">
+      <section className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b pb-4"><div><h2 className="text-base font-semibold">Q-learning 峡谷导航</h2><p className="mt-1 text-xs text-muted-foreground">160 状态 · 四方向动作 · 从真实 transition 观察每次 TD 更新</p></div><div className="flex flex-wrap items-center gap-2"><Badge className="bg-[#eef6f1] text-success"><CheckCircle size={14} />10 × 16 环境已验证</Badge><Badge className={algorithmReady ? "bg-[#eef6f1] text-success" : "bg-accent text-[#9a5505]"}>{algorithmReady ? <CheckCircle size={14} /> : <Function size={14} />}{algorithmReady ? "更新函数正在生效" : "运行一步核验更新函数"}</Badge></div></section>
+      <section className="mb-4 grid gap-3 rounded-panel border bg-card p-3 lg:grid-cols-[auto_1fr_auto] lg:items-center"><Tabs value={lab.mode} onValueChange={(value) => lab.setMode(value as LabMode)}><TabsList><TabsTrigger value="training">训练模式</TabsTrigger><TabsTrigger value="exploitation">利用模式</TabsTrigger></TabsList></Tabs><p className="text-xs text-muted-foreground lg:text-center">{lab.mode === "training" ? "epsilon-greedy 选择动作，并把每次 TD 更新映射回地图" : "冻结学习，只检验当前策略形成的路径"}</p><div className="flex items-center gap-3 font-mono text-xs"><span className={lab.running ? "text-success" : "text-muted-foreground"}>{lab.running ? "● 运行中" : "○ 已暂停"}</span><span>episode {lab.episode}</span></div></section>
+      <div className="grid items-start gap-4 xl:grid-cols-[260px_minmax(0,1fr)_300px]">
+        <aside className="order-2 xl:order-1"><ParameterPanel parameters={lab.parameters} disabled={lab.running} onChange={lab.updateParameter} /></aside>
+        <div className="order-1 min-w-0 space-y-4 xl:order-2">
+          <Card className="shadow-[0_12px_34px_rgba(28,39,34,0.07)]"><CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 border-b"><div><h2 className="text-sm font-semibold">峡谷导航环境</h2><p className="mt-1 text-xs text-muted-foreground">点击任一可达状态，查看精确 Q 值与策略</p></div><PlaybackControls running={lab.running} onStep={lab.advance} onRunEpisode={lab.runEpisode} onToggleContinuous={lab.toggleContinuous} onReset={lab.reset} /></CardHeader><CardContent className="pt-4"><EnvironmentGrid currentState={lab.currentState} selectedState={lab.selectedState} path={lab.path} qMatrix={lab.qMatrix} visitCounts={lab.visitCounts} lastQUpdate={lab.lastStep && lab.lastStep.newQ !== lab.lastStep.oldQ ? { state: lab.lastStep.state, action: lab.lastStep.action, version: lab.totalSteps } : undefined} greedyActions={lab.greedyActions} onSelectState={lab.setSelectedState} /></CardContent></Card>
+          <section className="grid gap-3 rounded-panel border border-[#eed4a9] bg-accent p-4 text-sm sm:grid-cols-[auto_1fr_auto] sm:items-center">{algorithmReady ? <CheckCircle className="text-success" size={21} weight="fill" /> : <WarningCircle className="text-primary" size={21} weight="fill" />}<div><h2 className="font-semibold">{algorithmReady ? "Q-learning 更新链路已接通" : "先运行一步，核验你的更新函数"}</h2><p className="mt-1 text-xs leading-5 text-[#725834]">{algorithmReady ? "地图价值、策略箭头、TD 分解和学习曲线使用同一条真实事件流。" : "系统会读取练习文件返回的 implemented、TD target、TD error 与新 Q 值，不再写死算法状态。"}</p></div><div className="inline-flex items-center gap-1.5 font-mono text-[10px] text-[#725834]"><Path size={15} /> environment → policy → update → evidence</div></section>
+        </div>
+        <aside className="order-3"><MetricsPanel episode={lab.episode} totalSteps={lab.totalSteps} totalFalls={lab.totalFalls} totalCollisions={lab.totalCollisions} successCount={lab.successCount} epsilon={lab.parameters.epsilon} lastStep={lab.lastStep} /></aside>
+      </div>
+      <div className="mt-4"><DataWorkbench selectedState={lab.selectedState} qMatrix={lab.qMatrix} history={lab.history} greedyActions={lab.greedyActions} /></div>
+    </div>
+  </>;
+}

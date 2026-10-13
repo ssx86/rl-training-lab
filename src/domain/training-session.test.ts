@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { ACTIONS } from "./cliff-walking";
+import { ACTIONS, START_STATE } from "./cliff-walking";
 import { QTable, selectAction } from "./q-table";
 import { TrainingSession } from "./training-session";
 import type { QValueUpdater } from "@/exercise/update-q-value";
+import type { LearningStrategy } from "./learning-strategy";
 
 describe("QTable", () => {
   it("starts with four zero values for every state", () => {
@@ -54,7 +55,7 @@ describe("TrainingSession", () => {
     const step = session.step({ alpha: 0.1, gamma: 0.9, epsilon: 0 });
 
     expect(step.newQ).toBe(3);
-    expect(session.qTable.get(36, ACTIONS.UP)).toBe(3);
+    expect(session.qTable.get(START_STATE, ACTIONS.UP)).toBe(3);
   });
 
   it("does not update Q values in exploitation-only mode", () => {
@@ -72,7 +73,38 @@ describe("TrainingSession", () => {
     );
 
     expect(step.newQ).toBe(step.oldQ);
-    expect(session.qTable.get(36, ACTIONS.UP)).toBe(0);
+    expect(session.qTable.get(START_STATE, ACTIONS.UP)).toBe(0);
+  });
+
+  it("accepts a reusable lesson strategy with algorithm-specific signals", () => {
+    const strategy: LearningStrategy = {
+      id: "sarsa",
+      update: ({ oldQ }) => ({
+        newQ: oldQ + 2,
+        tdTarget: 2,
+        tdError: 2,
+        nextMaxQ: 0,
+        implemented: true,
+        signals: { nextAction: "上", sampleSource: "environment" },
+      }),
+    };
+    const session = new TrainingSession({ strategy, random: () => 0 });
+
+    const step = session.step({ alpha: 0.1, gamma: 0.9, epsilon: 0 });
+
+    expect(step.algorithmId).toBe("sarsa");
+    expect(step.signals).toEqual({ nextAction: "上", sampleSource: "environment" });
+    expect(session.qTable.get(START_STATE, ACTIONS.UP)).toBe(2);
+  });
+
+  it("rejects ambiguous updater and strategy configuration", () => {
+    const strategy: LearningStrategy = {
+      id: "test",
+      update: () => ({ newQ: 0, tdTarget: 0, tdError: 0, nextMaxQ: 0, implemented: true, signals: {} }),
+    };
+    const updater: QValueUpdater = () => ({ newQ: 0, tdTarget: 0, tdError: 0, implemented: true });
+
+    expect(() => new TrainingSession({ strategy, updater })).toThrow("either updater or strategy");
   });
 });
 

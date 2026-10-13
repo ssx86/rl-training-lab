@@ -1,65 +1,94 @@
 import { describe, expect, it } from "vitest";
-import { ACTIONS, CliffWalkingEnvironment } from "./cliff-walking";
+import { ACTIONS, CliffWalkingEnvironment, GOAL_STATE, isReachableState, REWARDS, START_STATE, STATE_COUNT, type Action } from "./cliff-walking";
 
-describe("CliffWalkingEnvironment", () => {
-  it("starts at state 36 in the bottom-left cell", () => {
+describe("Canyon navigation environment", () => {
+  it("starts in the bottom-left cell of the 10 x 16 map", () => {
     const environment = new CliffWalkingEnvironment();
-
-    expect(environment.reset()).toEqual({ state: 36, row: 3, column: 0 });
+    expect(environment.reset()).toEqual({ state: START_STATE, row: 9, column: 0 });
   });
 
-  it("moves through safe cells with a reward of -1", () => {
+  it("charges the normal movement cost on plain terrain", () => {
     const environment = new CliffWalkingEnvironment();
-    environment.reset();
-
     const transition = environment.step(ACTIONS.UP);
-
-    expect(transition).toMatchObject({
-      state: 36,
-      action: ACTIONS.UP,
-      reward: -1,
-      nextState: 24,
-      done: false,
-      fell: false,
-    });
+    expect(transition).toMatchObject({ state: START_STATE, reward: REWARDS.STEP, nextState: 128, event: "move", collision: false });
   });
 
-  it("returns to the start with a -100 reward after entering the cliff", () => {
+  it("charges a stronger penalty and stays in place at the map boundary", () => {
     const environment = new CliffWalkingEnvironment();
-    environment.reset();
-
-    const transition = environment.step(ACTIONS.RIGHT);
-
-    expect(transition).toMatchObject({
-      reward: -100,
-      nextState: 36,
-      done: false,
-      fell: true,
-    });
-  });
-
-  it("keeps the agent inside the grid", () => {
-    const environment = new CliffWalkingEnvironment();
-    environment.reset();
-
     const transition = environment.step(ACTIONS.LEFT);
-
-    expect(transition.nextState).toBe(36);
-    expect(transition.reward).toBe(-1);
+    expect(transition).toMatchObject({ reward: REWARDS.COLLISION, nextState: START_STATE, event: "boundary", collision: true });
   });
 
-  it("ends the episode when the agent reaches the goal", () => {
+  it("charges a stronger penalty and stays in place when hitting a wall", () => {
     const environment = new CliffWalkingEnvironment();
-    environment.setStateForTesting(35);
+    environment.setStateForTesting(18);
+    const transition = environment.step(ACTIONS.RIGHT);
+    expect(transition).toMatchObject({ reward: REWARDS.COLLISION, nextState: 18, event: "wall", collision: true });
+  });
 
-    const transition = environment.step(ACTIONS.DOWN);
+  it("returns to the start after entering a cliff", () => {
+    const environment = new CliffWalkingEnvironment();
+    environment.setStateForTesting(129);
+    const transition = environment.step(ACTIONS.RIGHT);
+    expect(transition).toMatchObject({ reward: REWARDS.CLIFF, nextState: START_STATE, event: "cliff", fell: true });
+  });
 
-    expect(transition).toMatchObject({
-      nextState: 47,
-      reward: -1,
-      done: true,
-      fell: false,
-    });
+  it("uses a higher traversal cost for mud", () => {
+    const environment = new CliffWalkingEnvironment();
+    const transition = environment.step(ACTIONS.RIGHT);
+    expect(transition).toMatchObject({ reward: REWARDS.MUD, nextState: 145, event: "mud" });
+  });
+
+  it("ends with a positive reward at the goal", () => {
+    const environment = new CliffWalkingEnvironment();
+    environment.setStateForTesting(GOAL_STATE - 1);
+    const transition = environment.step(ACTIONS.RIGHT);
+    expect(transition).toMatchObject({ nextState: GOAL_STATE, reward: REWARDS.GOAL, event: "goal", done: true });
+  });
+
+  it("offers multiple shortest safe routes whose shaped return stays positive", () => {
+    const result = shortestSafeRoutes();
+
+    expect(result.distance).toBe(24);
+    expect(result.routeCount).toBeGreaterThan(1);
+    expect(result.bestReturn).toBeGreaterThan(0);
   });
 });
 
+function shortestSafeRoutes() {
+  const distances = Array<number>(STATE_COUNT).fill(Number.POSITIVE_INFINITY);
+  const routeCounts = Array<number>(STATE_COUNT).fill(0);
+  const bestReturns = Array<number>(STATE_COUNT).fill(Number.NEGATIVE_INFINITY);
+  const queue = [START_STATE];
+  distances[START_STATE] = 0;
+  routeCounts[START_STATE] = 1;
+  bestReturns[START_STATE] = 0;
+
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const state = queue[cursor];
+    for (const action of Object.values(ACTIONS) as Action[]) {
+      const environment = new CliffWalkingEnvironment();
+      environment.setStateForTesting(state);
+      const transition = environment.step(action);
+      if (!isReachableState(transition.nextState) || transition.nextState === state || transition.fell) continue;
+
+      const distance = distances[state] + 1;
+      const candidateReturn = bestReturns[state] + transition.reward;
+      if (distance < distances[transition.nextState]) {
+        distances[transition.nextState] = distance;
+        routeCounts[transition.nextState] = routeCounts[state];
+        bestReturns[transition.nextState] = candidateReturn;
+        queue.push(transition.nextState);
+      } else if (distance === distances[transition.nextState]) {
+        routeCounts[transition.nextState] = Math.min(2, routeCounts[transition.nextState] + routeCounts[state]);
+        bestReturns[transition.nextState] = Math.max(bestReturns[transition.nextState], candidateReturn);
+      }
+    }
+  }
+
+  return {
+    distance: distances[GOAL_STATE],
+    routeCount: routeCounts[GOAL_STATE],
+    bestReturn: bestReturns[GOAL_STATE],
+  };
+}

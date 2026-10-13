@@ -1,14 +1,19 @@
 import {
-  CliffWalkingEnvironment,
   START_STATE,
   type Transition,
 } from "./cliff-walking";
+import { CliffWalkingAdapter } from "./cliff-walking-adapter";
 import { QTable, selectAction, type ActionSource } from "./q-table";
 import {
   updateQValue,
   type QUpdateResult,
   type QValueUpdater,
 } from "@/exercise/update-q-value";
+import {
+  createQLearningStrategy,
+  type LearningSignal,
+  type LearningStrategy,
+} from "./learning-strategy";
 
 export interface LearningParameters {
   alpha: number;
@@ -17,6 +22,8 @@ export interface LearningParameters {
 }
 
 export interface StepResult extends Transition, QUpdateResult {
+  algorithmId: string;
+  signals: Record<string, LearningSignal>;
   source: ActionSource;
   oldQ: number;
   nextMaxQ: number;
@@ -27,14 +34,15 @@ export interface StepResult extends Transition, QUpdateResult {
 
 interface TrainingSessionOptions {
   updater?: QValueUpdater;
+  strategy?: LearningStrategy;
   random?: () => number;
   qTable?: QTable;
 }
 
 export class TrainingSession {
   readonly qTable: QTable;
-  private readonly environment = new CliffWalkingEnvironment();
-  private readonly updater: QValueUpdater;
+  private readonly environment = new CliffWalkingAdapter();
+  private readonly strategy: LearningStrategy;
   private readonly random: () => number;
   private episode = 1;
   private episodeStep = 0;
@@ -42,12 +50,15 @@ export class TrainingSession {
 
   constructor(options: TrainingSessionOptions = {}) {
     this.qTable = options.qTable ?? new QTable();
-    this.updater = options.updater ?? updateQValue;
+    if (options.updater && options.strategy) {
+      throw new Error("Provide either updater or strategy, not both.");
+    }
+    this.strategy = options.strategy ?? createQLearningStrategy(options.updater ?? updateQValue);
     this.random = options.random ?? Math.random;
   }
 
   get currentState(): number {
-    return this.environment.position.state;
+    return this.environment.state;
   }
 
   get currentEpisode(): number {
@@ -68,20 +79,23 @@ export class TrainingSession {
     );
     const transition = this.environment.step(selection.action);
     const oldQ = this.qTable.get(state, selection.action);
-    const nextMaxQ = transition.done ? 0 : this.qTable.maxValue(transition.nextState);
     const update = learn
-      ? this.updater({
-          ...transition,
+      ? this.strategy.update({
+          transition,
+          qTable: this.qTable,
           oldQ,
-          nextMaxQ,
           alpha: parameters.alpha,
           gamma: parameters.gamma,
+          epsilon: parameters.epsilon,
+          random: this.random,
         })
       : {
           newQ: oldQ,
           tdTarget: null,
           tdError: null,
           implemented: false,
+          nextMaxQ: transition.done ? 0 : this.qTable.maxValue(transition.nextState),
+          signals: {},
         };
 
     if (learn) {
@@ -95,8 +109,10 @@ export class TrainingSession {
       ...transition,
       ...update,
       source: selection.source,
+      algorithmId: this.strategy.id,
       oldQ,
-      nextMaxQ,
+      nextMaxQ: update.nextMaxQ,
+      signals: update.signals,
       episode: this.episode,
       episodeStep: this.episodeStep,
       cumulativeReward: this.cumulativeReward,

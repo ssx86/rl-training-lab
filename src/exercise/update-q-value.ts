@@ -30,11 +30,17 @@ export type QValueUpdater = (input: QUpdateInput) => QUpdateResult;
 export const updateQValue: QValueUpdater = (input) => {
   // TODO: 在这里实现 Q-learning 的 Q 值更新。
   // 页面、环境、动作选择和训练循环都已经准备好。
+  const { reward, done, oldQ, nextMaxQ, alpha, gamma } = input;
+
+  const tdTarget = done ? reward : reward + gamma * nextMaxQ;
+  const tdError = tdTarget - oldQ;
+  const newQ = oldQ + alpha * tdError;
+
   return {
-    newQ: input.oldQ,
-    tdTarget: null,
-    tdError: null,
-    implemented: false,
+    newQ,
+    tdTarget,
+    tdError,
+    implemented: true,
   };
 };
 

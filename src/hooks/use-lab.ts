@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { START_STATE, type Action } from "@/domain/cliff-walking";
+import { START_STATE, STATE_COUNT, type Action } from "@/domain/cliff-walking";
 import { TrainingSession, type StepResult } from "@/domain/training-session";
 
 export type LabMode = "training" | "exploitation";
@@ -50,7 +50,13 @@ export function useLab() {
   const [history, setHistory] = useState<EpisodeRecord[]>([]);
   const [totalSteps, setTotalSteps] = useState(0);
   const [totalFalls, setTotalFalls] = useState(0);
+  const [totalCollisions, setTotalCollisions] = useState(0);
   const [episodeFalls, setEpisodeFalls] = useState(0);
+  const [visitCounts, setVisitCounts] = useState(() => {
+    const initial = Array<number>(STATE_COUNT).fill(0);
+    initial[START_STATE] = 1;
+    return initial;
+  });
   const [qVersion, setQVersion] = useState(0);
 
   const finishEpisode = useCallback(
@@ -98,11 +104,18 @@ export function useLab() {
     setTotalSteps((value) => value + 1);
     setQVersion((value) => value + 1);
     setPath((states) => (step.fell ? [START_STATE] : [...states, step.nextState]));
+    setVisitCounts((counts) => {
+      const next = [...counts];
+      next[step.nextState] += 1;
+      return next;
+    });
 
     if (step.fell) {
       setTotalFalls((value) => value + 1);
       setEpisodeFalls((value) => value + 1);
     }
+
+    if (step.collision) setTotalCollisions((value) => value + 1);
 
     if (step.done || step.episodeStep >= parameters.maxSteps) {
       finishEpisode(step, step.done);
@@ -140,7 +153,13 @@ export function useLab() {
     setHistory([]);
     setTotalSteps(0);
     setTotalFalls(0);
+    setTotalCollisions(0);
     setEpisodeFalls(0);
+    setVisitCounts(() => {
+      const initial = Array<number>(STATE_COUNT).fill(0);
+      initial[START_STATE] = 1;
+      return initial;
+    });
     setQVersion((value) => value + 1);
   }, [session]);
 
@@ -181,7 +200,9 @@ export function useLab() {
     history,
     totalSteps,
     totalFalls,
+    totalCollisions,
     episodeFalls,
+    visitCounts,
     successCount,
     episode: session.currentEpisode,
     qMatrix,

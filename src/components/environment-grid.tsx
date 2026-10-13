@@ -1,59 +1,45 @@
+import { useMemo, useState } from "react";
 import { Flag, PersonSimpleRun } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 import {
   ACTIONS,
   COLUMNS,
   GOAL_STATE,
-  isCliffState,
+  isReachableState,
   ROWS,
-  START_STATE,
+  STATE_COUNT,
+  terrainForState,
   type Action,
+  type Terrain,
 } from "@/domain/cliff-walking";
 import { cn } from "@/lib/utils";
 
-type HeatLevel = "neutral" | "best" | "good" | "weak" | "worst";
+type MapLayer = "terrain" | "policy" | "value";
 
-const ACTION_META: Record<Action, { symbol: string; position: string; heatPosition: string }> = {
-  [ACTIONS.UP]: {
-    symbol: "↑",
-    position: "left-1/2 top-0.5 -translate-x-1/2",
-    heatPosition: "left-0 right-0 top-0 h-1/4 md:left-[22%] md:right-[22%] md:h-[30%] md:rounded-b-[4px]",
-  },
-  [ACTIONS.RIGHT]: {
-    symbol: "→",
-    position: "left-1/2 top-[26%] -translate-x-1/2 md:left-auto md:right-0.5 md:top-[26%] md:translate-x-0 md:-translate-y-1/2",
-    heatPosition: "left-0 right-0 top-1/4 h-1/4 md:bottom-[22%] md:left-auto md:right-0 md:top-[22%] md:h-auto md:w-[30%] md:rounded-l-[4px]",
-  },
-  [ACTIONS.DOWN]: {
-    symbol: "↓",
-    position: "left-1/2 top-[51%] -translate-x-1/2 md:bottom-0.5 md:top-auto",
-    heatPosition: "left-0 right-0 top-1/2 h-1/4 md:bottom-0 md:left-[22%] md:right-[22%] md:top-auto md:h-[30%] md:rounded-t-[4px]",
-  },
-  [ACTIONS.LEFT]: {
-    symbol: "←",
-    position: "bottom-0.5 left-1/2 -translate-x-1/2 md:bottom-auto md:left-0.5 md:top-[74%] md:translate-x-0 md:-translate-y-1/2",
-    heatPosition: "bottom-0 left-0 right-0 h-1/4 md:bottom-[22%] md:right-auto md:top-[22%] md:h-auto md:w-[30%] md:rounded-r-[4px]",
-  },
+const ACTION_SYMBOLS: Record<Action, string> = {
+  [ACTIONS.UP]: "↑",
+  [ACTIONS.RIGHT]: "→",
+  [ACTIONS.DOWN]: "↓",
+  [ACTIONS.LEFT]: "←",
 };
 
-const HEAT_COLORS: Record<HeatLevel, string> = {
-  neutral: "rgba(226, 232, 240, 0.72)",
-  best: "rgba(220, 38, 38, 0.62)",
-  good: "rgba(251, 146, 60, 0.56)",
-  weak: "rgba(147, 197, 253, 0.58)",
-  worst: "rgba(37, 99, 235, 0.62)",
+const TERRAIN_NAMES: Record<Terrain, string> = {
+  plain: "普通地面",
+  mud: "泥地",
+  wall: "墙体",
+  cliff: "悬崖",
+  start: "起点",
+  goal: "目标",
 };
 
-export interface QUpdateHighlight {
-  state: number;
-  action: Action;
-  version: number;
-}
+export interface QUpdateHighlight { state: number; action: Action; version: number }
 
 interface EnvironmentGridProps {
   currentState: number;
   selectedState: number;
   path: number[];
   qMatrix: number[][];
+  visitCounts: number[];
   lastQUpdate?: QUpdateHighlight;
   greedyActions: (state: number) => Action[];
   onSelectState: (state: number) => void;
@@ -64,156 +50,133 @@ export function EnvironmentGrid({
   selectedState,
   path,
   qMatrix,
+  visitCounts,
   lastQUpdate,
   greedyActions,
   onSelectState,
 }: EnvironmentGridProps) {
+  const [layer, setLayer] = useState<MapLayer>("terrain");
+  const valueRange = useMemo(() => {
+    const maxima = qMatrix.filter((_, state) => isReachableState(state)).map((values) => Math.max(...values));
+    return { min: Math.min(0, ...maxima), max: Math.max(0, ...maxima) };
+  }, [qMatrix]);
+
   return (
     <div>
-      <div
-        className="grid aspect-[3/1] w-full gap-1"
-        style={{ gridTemplateColumns: `repeat(${COLUMNS}, minmax(0, 1fr))` }}
-        role="grid"
-        aria-label={`${ROWS} 行 ${COLUMNS} 列悬崖行走环境，智能体当前位于状态 ${currentState}`}
-      >
-        {Array.from({ length: ROWS * COLUMNS }, (_, state) => {
-          const cliff = isCliffState(state);
-          const start = state === START_STATE;
-          const goal = state === GOAL_STATE;
-          const active = state === currentState;
-          const selected = state === selectedState;
-          const visited = path.includes(state);
-          const actions = cliff || goal ? [] : greedyActions(state);
-          const qValues = qMatrix[state] ?? [0, 0, 0, 0];
-
-          return (
-            <button
-              key={state}
-              type="button"
-              data-testid="grid-cell"
-              role="gridcell"
-              disabled={cliff}
-              aria-label={cellLabel(state, { cliff, start, goal, active })}
-              aria-selected={selected}
-              onClick={() => onSelectState(state)}
-              className={cn(
-                "relative grid min-h-11 place-items-center overflow-hidden rounded-[6px] border bg-[#f8faf8] text-muted-foreground transition-colors sm:min-h-14",
-                visited && "shadow-[inset_0_0_0_1px_rgba(217,119,6,0.28)]",
-                active && "border-primary ring-2 ring-primary",
-                selected && "border-primary ring-1 ring-primary",
-                cliff && "cursor-not-allowed border-[#2f3432] bg-[#2f3432] text-white",
-                goal && "border-success bg-[#e9f5ef] text-success",
-              )}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1 rounded-control border bg-[#f0f2f0] p-1" aria-label="地图观察层">
+          {(["terrain", "policy", "value"] as MapLayer[]).map((item) => (
+            <Button
+              key={item}
+              size="sm"
+              variant={layer === item ? "secondary" : "ghost"}
+              aria-pressed={layer === item}
+              onClick={() => setLayer(item)}
             >
-              {!cliff && !goal && qValues.map((value, actionIndex) => {
-                const action = actionIndex as Action;
-                const meta = ACTION_META[action];
-                const greedy = actions.includes(action);
-                const heatLevel = qHeatLevel(value, qValues);
-                const highlighted = lastQUpdate?.state === state && lastQUpdate.action === action;
-                return (
-                  <span key={`${action}-${highlighted ? lastQUpdate.version : "stable"}`}>
-                    <span
-                      aria-hidden
-                      data-testid={`q-heat-${action}`}
-                      data-heat={heatLevel}
-                      data-highlight={highlighted ? "true" : undefined}
-                      data-update-version={highlighted ? lastQUpdate.version : undefined}
-                      className={cn(
-                        "absolute transition-colors duration-200",
-                        meta.heatPosition,
-                        highlighted && "q-heat-flash",
-                      )}
-                      style={{ backgroundColor: HEAT_COLORS[heatLevel] }}
-                    />
-                    <span
-                      className={cn(
-                        "absolute z-10 whitespace-nowrap rounded-[2px] bg-white/80 px-px py-[1px] font-mono text-[7px] leading-none tracking-[-0.06em] text-[#37413c] shadow-[0_0_0_1px_rgba(255,255,255,0.45)] sm:text-[8px] 2xl:text-[9px]",
-                        meta.position,
-                        greedy && "font-bold text-foreground",
-                      )}
-                      title={`${meta.symbol} ${value}`}
-                    >
-                      {meta.symbol}{formatCompactQ(value)}
-                    </span>
-                  </span>
-                );
-              })}
-
-              <span className={cn(
-                "absolute left-0.5 top-0.5 z-10 font-mono text-[7px] leading-none opacity-55 sm:text-[8px]",
-                !cliff && !goal && "sr-only",
-              )}>{state}</span>
-
-              {active && !cliff && !goal ? (
-                <span
-                  data-testid="agent-marker"
-                  className="absolute left-1/2 top-1/2 z-20 hidden size-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white ring-1 ring-primary md:grid"
-                >
-                  <PersonSimpleRun aria-hidden size={11} weight="fill" className="text-primary" />
-                </span>
-              ) : start ? (
-                <span className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-mono text-[8px] font-bold text-foreground">S</span>
-              ) : goal ? (
-                <span className="relative z-10 flex items-center gap-1 font-medium" title="终点">
-                  <Flag size={13} weight="fill" />
-                  <span className="sr-only">终点</span>
-                </span>
-              ) : cliff ? (
-                <span className="hidden font-medium sm:inline">悬崖</span>
-              ) : (
-                <span className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 font-mono text-[7px] font-semibold text-foreground/55 sm:text-[8px]">
-                  {state}
-                </span>
-              )}
-            </button>
-          );
-        })}
+              {item === "terrain" ? "地形" : item === "policy" ? "策略" : "价值"}
+            </Button>
+          ))}
+        </div>
+        <p className="font-mono text-[11px] text-muted-foreground">10 × 16 / {STATE_COUNT} states / selected {selectedState}</p>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        <span>琥珀色图标：智能体</span>
-        <span>深色区域：悬崖，奖励 -100</span>
-        <span>普通移动：奖励 -1</span>
-        <span className="inline-flex items-center gap-1.5">
-          格内相对：低
-          <span className="size-2 rounded-[2px] bg-[rgba(37,99,235,0.62)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(147,197,253,0.58)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(251,146,60,0.56)]" />
-          <span className="size-2 rounded-[2px] bg-[rgba(220,38,38,0.62)]" />
-          优
-          <span className="ml-1 size-2 rounded-[2px] bg-[rgba(226,232,240,0.72)]" />
-          等值
-        </span>
+
+      <div className="overflow-x-auto pb-1">
+        <div
+          className="grid min-w-[720px] gap-1"
+          style={{ gridTemplateColumns: `repeat(${COLUMNS}, minmax(0, 1fr))` }}
+          role="grid"
+          aria-label={`${ROWS} 行 ${COLUMNS} 列峡谷导航环境，智能体当前位于状态 ${currentState}`}
+        >
+          {Array.from({ length: STATE_COUNT }, (_, state) => {
+            const terrain = terrainForState(state);
+            const reachable = isReachableState(state);
+            const active = state === currentState;
+            const selected = state === selectedState;
+            const visited = path.includes(state);
+            const values = qMatrix[state] ?? [0, 0, 0, 0];
+            const best = Math.max(...values);
+            const actions = reachable && state !== GOAL_STATE ? greedyActions(state) : [];
+            const policy = actions.length === 1 ? ACTION_SYMBOLS[actions[0]] : "·";
+            const updateAtState = lastQUpdate?.state === state;
+
+            return (
+              <button
+                key={state}
+                type="button"
+                data-testid="grid-cell"
+                role="gridcell"
+                disabled={!reachable}
+                aria-label={cellLabel(state, terrain, active)}
+                aria-selected={selected}
+                onClick={() => onSelectState(state)}
+                className={cn(
+                  "map-cell relative grid aspect-square min-h-8 place-items-center overflow-hidden rounded-[4px] border bg-[#fafbf9] text-[10px] text-muted-foreground transition-[border-color,background-color,transform] duration-200",
+                  terrain === "mud" && "map-cell-mud bg-[#f4efe3]",
+                  terrain === "wall" && "map-cell-wall cursor-not-allowed border-[#8b938f] bg-[#dfe4e1]",
+                  terrain === "cliff" && "map-cell-cliff cursor-not-allowed border-[#2f3432] bg-[#2f3432] text-white",
+                  terrain === "goal" && "border-success bg-[#e9f5ef] text-success",
+                  visited && reachable && "shadow-[inset_0_0_0_2px_rgba(217,119,6,0.22)]",
+                  selected && reachable && "z-10 border-primary ring-2 ring-primary",
+                  active && "z-20 border-primary ring-2 ring-primary",
+                  updateAtState && "q-heat-flash",
+                )}
+                style={layer === "value" && reachable ? valueStyle(best, valueRange.min, valueRange.max) : undefined}
+              >
+                <span className="absolute left-1 top-1 font-mono text-[7px] leading-none opacity-45">{state}</span>
+                {active ? (
+                  <span data-testid="agent-marker" className="grid size-5 place-items-center rounded-full bg-white shadow-sm ring-1 ring-primary">
+                    <PersonSimpleRun aria-hidden size={13} weight="fill" className="text-primary" />
+                  </span>
+                ) : terrain === "start" ? (
+                  <span className="font-mono text-[10px] font-bold text-foreground">S</span>
+                ) : terrain === "goal" ? (
+                  <Flag size={15} weight="fill" aria-label="目标" />
+                ) : terrain === "wall" ? (
+                  <span className="text-[8px] font-semibold text-[#59625d]">墙</span>
+                ) : terrain === "cliff" ? (
+                  <span className="text-[8px] font-semibold">崖</span>
+                ) : layer === "policy" ? (
+                  <span className="font-mono text-base font-semibold text-foreground">{policy}</span>
+                ) : layer === "value" ? (
+                  <span className="rounded-[3px] bg-white/75 px-1 font-mono text-[8px] font-semibold text-foreground">{formatValue(best)}</span>
+                ) : terrain === "mud" ? (
+                  <span className="text-[8px] font-semibold text-[#725834]">泥</span>
+                ) : visitCounts[state] > 0 ? (
+                  <span className="font-mono text-[8px] text-primary">{visitCounts[state]}</span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground">
+        <Legend swatch="bg-white ring-1 ring-primary" label="智能体 / 选中" />
+        <Legend swatch="map-cell-wall bg-[#dfe4e1]" label="墙，撞击 -4" />
+        <Legend swatch="bg-[#f4efe3]" label="泥地 -3" />
+        <Legend swatch="bg-[#2f3432]" label="悬崖 -60" />
+        <Legend swatch="bg-[#e9f5ef]" label="目标 +30" />
+        <span>普通移动 -1 · 边界碰撞 -4</span>
       </div>
     </div>
   );
 }
 
-function qHeatLevel(value: number, values: number[]): HeatLevel {
-  const minimum = Math.min(...values);
-  const maximum = Math.max(...values);
-  if (minimum === maximum) return "neutral";
-
-  const ratio = (value - minimum) / (maximum - minimum);
-  if (ratio >= 0.75) return "best";
-  if (ratio >= 0.5) return "good";
-  if (ratio >= 0.25) return "weak";
-  return "worst";
+function Legend({ swatch, label }: { swatch: string; label: string }) {
+  return <span className="inline-flex items-center gap-1.5"><span className={cn("size-3 rounded-[3px] border", swatch)} />{label}</span>;
 }
 
-function formatCompactQ(value: number) {
-  return (Object.is(value, -0) ? 0 : value).toFixed(1);
+function valueStyle(value: number, minimum: number, maximum: number) {
+  const spread = Math.max(1, maximum - minimum);
+  const ratio = (value - minimum) / spread;
+  return { backgroundColor: `rgba(217, 119, 6, ${0.08 + ratio * 0.48})` };
 }
 
-function cellLabel(
-  state: number,
-  flags: { cliff: boolean; start: boolean; goal: boolean; active: boolean },
-) {
-  const labels = [`状态 ${state}`];
-  if (flags.start) labels.push("起点");
-  if (flags.goal) labels.push("终点");
-  if (flags.cliff) labels.push("悬崖");
-  if (flags.active) labels.push("智能体当前位置");
-  return labels.join("，");
+function formatValue(value: number) {
+  const safeValue = Object.is(value, -0) ? 0 : value;
+  return Math.abs(safeValue) >= 100 ? safeValue.toFixed(0) : safeValue.toFixed(1);
 }
 
+function cellLabel(state: number, terrain: Terrain, active: boolean) {
+  return [`状态 ${state}`, TERRAIN_NAMES[terrain], active ? "智能体当前位置" : ""].filter(Boolean).join("，");
+}
