@@ -9,7 +9,7 @@ Use this skill when adding or revising an RL lesson in this repository. Read `de
 
 ## Teaching contract
 
-Start from one question the learner should be able to answer after a single step. Define the algorithm-specific intermediate signals that make the answer observable. Register the lesson and its `requiredSignals` in `src/domain/algorithm-catalog.ts`; do not mark it `active` until the strategy, UI evidence, and tests are connected.
+Start from one question the learner should be able to answer after a single step. Define the algorithm-specific intermediate signals that make the answer observable. Register the lesson and its `requiredSignals` in `src/catalog/experiment-catalog.ts` (the single catalog since the 1.1.0 companion refactor; it replaced the earlier `algorithm-catalog.ts`); do not mark it `active` until the strategy, UI evidence, and tests are connected.
 
 Implement update semantics behind `LearningStrategy` in `src/domain/learning-strategy.ts`. Keep environment transitions, action selection, value updates, and presentation separate. The UI must consume strategy results rather than recompute the formula.
 
