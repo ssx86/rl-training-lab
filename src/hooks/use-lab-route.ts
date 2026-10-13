@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { DEFAULT_LAB_ID, labFromHash, labHref, legacyPathToLab, type LabId } from "@/domain/lab-registry";
+import { DEFAULT_LAB_ID, experimentFromHash, experimentHref, legacyPathToExperiment, type LabId } from "@/catalog/experiment-catalog";
 
 function readRoute(): LabId | null {
-  if (window.location.hash) return labFromHash(window.location.hash);
-  return legacyPathToLab(window.location.pathname) ?? DEFAULT_LAB_ID;
+  if (window.location.hash) return experimentFromHash(window.location.hash);
+  return legacyPathToExperiment(window.location.pathname) ?? DEFAULT_LAB_ID;
 }
 
 export function useLabRoute(): LabId | null {
@@ -11,10 +11,10 @@ export function useLabRoute(): LabId | null {
 
   useEffect(() => {
     if (!window.location.hash) {
-      const initial = legacyPathToLab(window.location.pathname) ?? DEFAULT_LAB_ID;
-      window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}${labHref(initial)}`);
+      const initial = legacyPathToExperiment(window.location.pathname) ?? DEFAULT_LAB_ID;
+      window.history.replaceState({}, "", `${window.location.pathname}${window.location.search}${experimentHref(initial)}`);
     }
-    const handleHashChange = () => setLabId(labFromHash(window.location.hash));
+    const handleHashChange = () => setLabId(experimentFromHash(window.location.hash));
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);

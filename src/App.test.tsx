@@ -70,15 +70,19 @@ describe("RL Navigation Lab", () => {
     expect(screen.getByRole("link", { name: /DQN 单车/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /TD3 城市车队/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /TD3 科目二/ })).toBeInTheDocument();
+    expect(screen.queryByText("Q(s,a) <- Q(s,a) + alpha [r + gamma max Q(s',a') - Q(s,a)]")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /target 只剩终止奖励/ }));
     expect(screen.getByText("Q(s,a) <- Q(s,a) + alpha [r + gamma max Q(s',a') - Q(s,a)]")).toBeInTheDocument();
 
     await user.click(screen.getByRole("link", { name: /DQN 单车/ }));
-    expect(screen.getByText("y = r + gamma max Q_target(s', a')")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /强相关样本会让回归目标更不稳定/ }));
+    expect(screen.getByText("y = r + gamma (1 - done) max Q_target(s', a')")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "DQN 单车驾驶训练" })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "手动" })).not.toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: "脚本" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("link", { name: /TD3 城市车队/ }));
+    await user.click(screen.getByRole("button", { name: /异步非平稳更新可能互相覆盖/ }));
     expect(screen.getByText(/min\(Q1_target, Q2_target\)/)).toBeInTheDocument();
   });
 

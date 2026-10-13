@@ -1,6 +1,6 @@
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ALGORITHM_LESSONS } from "@/domain/algorithm-catalog";
+import { ALGORITHM_ROADMAP } from "@/catalog/experiment-catalog";
 import { ACTION_LABELS, isReachableState, stateToPosition, terrainForState, type Action } from "@/domain/cliff-walking";
 import type { EpisodeRecord } from "@/hooks/use-lab";
 import { cn, formatMetric } from "@/lib/utils";
@@ -57,7 +57,7 @@ export function DataWorkbench({ selectedState, qMatrix, history, greedyActions }
         </TabsContent>
 
         <TabsContent value="roadmap">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{ALGORITHM_LESSONS.map((lesson) => <AlgorithmStage key={lesson.id} name={lesson.name} status={lesson.statusLabel} question={lesson.learningQuestion} evidence={lesson.evidence} signals={lesson.requiredSignals} active={lesson.status === "active"} />)}</div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{ALGORITHM_ROADMAP.map((lesson) => <AlgorithmStage key={lesson.id} name={lesson.name} status={lesson.statusLabel} question={lesson.learningQuestion} evidence={lesson.evidence} signals={lesson.requiredSignals} active={lesson.status === "active"} />)}</div>
           <p className="mt-4 text-xs leading-5 text-muted-foreground">所有算法沿用同一方法：环境事件可解释、单步公式可展开、全局策略可观察、回合结果可比较、边界行为有确定性测试。未标为“当前实验”的算法尚未实现。</p>
         </TabsContent>
       </Tabs>

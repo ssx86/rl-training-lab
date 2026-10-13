@@ -7,6 +7,8 @@
 - `#/td3-fleet`：TD3 共享出租车队，一辆 learner 更新共享网络，其余车辆实时推理并轮换 learner。
 - `#/subject-2`：TD3 科目二固定考场，多科目循环训练、物理约束与过程奖励共用同一模型。
 
+它是独立教程 [RL Field Guide](https://ssx86.github.io/rl-field-guide/en/) 的交互配套项目。每个实验都明确链接到对应英文教程章节，并使用相同的学习顺序：**先预测 → 再运行 → 看数值证据 → 读公式解释 → 改变假设做迁移**。实验目录、章节映射和教学契约只有一个来源：`src/catalog/experiment-catalog.ts`。
+
 ## 启动
 
 ```bash
@@ -33,7 +35,7 @@ npm run lint
 ### TD3 连续控制共享车队
 
 - 3 张固定的 OpenStreetMap 街区：Vathorst、Milton Keynes、Houten；保留环岛、死胡同、绕行和真实道路拓扑。
-- 4 / 10 / 20 辆车共享一个 TD3 actor；默认 10 辆，单步只写入当前 learner 的经验。
+- 4 / 10 / 20 / 50 辆车共享一个 TD3 actor；默认 10 辆，单步只写入当前 learner 的经验。
 - actor 输出连续 `steer [-1,1]` 和 `throttle [-1,1]`；双 critic、延迟 actor 更新和软 target 更新替代九个离散动作。
 - 180° 前向雷达使用 21 个扇区，每个扇区同时保留道路边缘、车辆、结构物和目的地四个距离通道，共形成 93 维观察。
 - 训练速度提供 `1× / 4× / 16× / MAX`，训练 Worker 与 RAF 渲染频率解耦。
@@ -76,9 +78,9 @@ src/exercise/update-q-value.ts
 
 ## 扩展算法
 
-算法学习路线统一登记在 `src/domain/algorithm-catalog.ts`，可执行更新遵循 `src/domain/learning-strategy.ts` 的策略契约。当前 Q-learning、离散 DQN 与连续控制 TD3 均有独立可运行入口；SARSA、Expected SARSA、Dyna-Q、PPO 与 SAC 保持为后续学习路线，不伪装成已实现功能。
+实验与算法学习路线统一登记在 `src/catalog/experiment-catalog.ts`，可执行更新遵循 `src/domain/learning-strategy.ts` 的策略契约。当前 Q-learning、离散 DQN 与连续控制 TD3 均有独立可运行入口；SARSA、Expected SARSA、Dyna-Q、PPO 与 SAC 保持为后续学习路线，不伪装成已实现功能。
 
-新算法如何复用环境、交互与证据体系，见 [docs/RL_LAB_METHOD.md](docs/RL_LAB_METHOD.md)。视觉与交互约束见 [design.md](design.md)，自主审核后的布局原型见 [PROTOTYPE.md](PROTOTYPE.md)。
+配套教程架构见 [docs/TUTORIAL_COMPANION_ARCHITECTURE.md](docs/TUTORIAL_COMPANION_ARCHITECTURE.md)，新算法如何复用环境、交互与证据体系见 [docs/RL_LAB_METHOD.md](docs/RL_LAB_METHOD.md)。视觉与交互约束见 [design.md](design.md)，自主审核后的布局原型见 [PROTOTYPE.md](PROTOTYPE.md)。
 
 继续扩展新算法时，可直接使用项目技能 [skills/rl-teaching-lab/SKILL.md](skills/rl-teaching-lab/SKILL.md)，它把学习问题、策略信号、奖励审计、观察层和验收门槛串成同一套执行流程。
 
@@ -93,3 +95,5 @@ src/exercise/update-q-value.ts
 - Vitest + Testing Library
 
 TensorFlow.js 在独立 Worker 中执行 TD3 的 actor、双 critic 与 target 网络，并自动选择浏览器支持的最快后端；表格型 Q-learning 继续使用 `Float64Array`，便于逐项观察和调试。
+
+DQN、TD3 车队和 TD3 科目二共享 `src/rl/replay-buffer.ts`；TD3 的纯配置与参数说明独立于 TensorFlow.js 执行模块，使教学页面无需加载训练引擎即可展示准确的模型结构。
