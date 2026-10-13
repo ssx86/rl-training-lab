@@ -1,4 +1,4 @@
-export type RuntimeMode = "manual" | "scripted" | "training" | "evaluation";
+export type RuntimeMode = "training" | "evaluation";
 
 export interface RuntimeEnvelope<Payload> {
   schemaVersion: string;

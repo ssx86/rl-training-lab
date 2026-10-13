@@ -1,5 +1,6 @@
-import { ContinuousReplayBuffer } from "@/rl/continuous/replay-buffer";
-import { Td3Agent, describeTd3Config, type Td3AgentState, type Td3Description } from "@/rl/continuous/td3-agent";
+import { ReplayBuffer } from "@/rl/replay-buffer";
+import { Td3Agent, type Td3AgentState } from "@/rl/continuous/td3-agent";
+import { describeTd3Config, type Td3Description } from "@/rl/continuous/td3-config";
 import { SUBJECT2_PROJECT_ORDER, type Subject2PoseCheckpoint, type Subject2Project, type Subject2Scenario } from "./subject2-course";
 import { Subject2Environment, SUBJECT2_OBSERVATION_SIZE, type Subject2Observation, type Subject2RewardBreakdown, type Subject2TerminalReason } from "./subject2-environment";
 import { createSeededRandom, evaluationScenarioSeed, generateSubject2Scenario, trainingScenarioSeed } from "./subject2-scenario";
@@ -92,7 +93,7 @@ export class Subject2TrainingRuntime {
   private readonly baseSeed: number;
   private readonly environment: Subject2Environment;
   private readonly agent: Td3Agent<Subject2Action>;
-  private readonly replay = new ContinuousReplayBuffer<Subject2Action>(100_000);
+  private readonly replay = new ReplayBuffer<Subject2Action>(100_000);
   private readonly random: () => number;
   private readonly warmupSteps: number;
   private readonly batchSize: number;

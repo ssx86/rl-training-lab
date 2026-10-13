@@ -4,7 +4,7 @@ import { type CityMap } from "./city-map";
 import { createLaneRoute } from "./lane-route";
 import type { DrivingMap } from "./maps";
 import { ContinuousDrivingEnvironment, type ContinuousDrivingState } from "./continuous-driving-environment";
-import { ContinuousReplayBuffer } from "@/rl/continuous/replay-buffer";
+import { ReplayBuffer } from "@/rl/replay-buffer";
 import { continuousActionLabel, type ContinuousDrivingAction } from "./continuous-control";
 import { RADAR_MAX_DISTANCE, type RadarScan } from "./radar";
 import { Td3Agent } from "@/rl/continuous/td3-agent";
@@ -170,7 +170,7 @@ export class SharedFleetRuntime {
   private readonly random: () => number;
   private readonly actors: FleetActor[];
   private readonly agent: Td3Agent;
-  private readonly replay = new ContinuousReplayBuffer(50_000);
+  private readonly replay = new ReplayBuffer<ContinuousDrivingAction>(50_000);
   private readonly rotationEvery: number;
   private readonly warmupSteps: number;
   private readonly batchSize: number;

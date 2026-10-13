@@ -6,7 +6,7 @@ import {
   createEpsilonSchedule,
   DqnAgent,
 } from "./dqn-agent";
-import type { DrivingExperience } from "./replay-buffer";
+import type { Experience } from "@/rl/replay-buffer";
 
 const zeros = Array.from({ length: 12 }, () => 0);
 
@@ -57,7 +57,7 @@ describe("DQN foundations", () => {
   it("trains a batch and synchronizes the target network", async () => {
     const agent = new DqnAgent({ seed: 11, hiddenUnits: 16 });
     agents.push(agent);
-    const batch: DrivingExperience[] = [
+    const batch: Experience<number>[] = [
       {
         observation: zeros,
         action: 5,

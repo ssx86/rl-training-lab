@@ -4,7 +4,7 @@ import type { CurriculumLevel } from "../driving/curriculum";
 import type { EvaluationReport } from "../driving/evaluator";
 import type { SerializedDqnModel } from "../driving/model-format";
 
-export type TrainerWorkerMode = Extract<RuntimeMode, "training" | "evaluation">;
+export type TrainerWorkerMode = RuntimeMode;
 export type TrainerStatus = "idle" | "running" | "paused" | "complete" | "error";
 
 export type DrivingTrainerCommand =

@@ -2,9 +2,9 @@ import * as tf from "@tensorflow/tfjs";
 import {
   clampContinuousAction,
   CONTINUOUS_ACTION_SIZE,
-  CONTINUOUS_OBSERVATION_SIZE,
   type ContinuousDrivingAction,
 } from "@/driving/continuous-control";
+import { describeTd3Config, resolveTd3Config, type Td3Config, type Td3Description } from "./td3-config";
 
 export interface ContinuousExperience<TAction = ContinuousDrivingAction> {
   readonly observation: readonly number[];
@@ -26,42 +26,10 @@ const CONTINUOUS_ACTION_CODEC: Td3ActionCodec<ContinuousDrivingAction> = {
   decode: (values) => clampContinuousAction({ steer: values[0], throttle: values[1] }),
 };
 
-export interface Td3Config {
-  readonly observationSize?: number;
-  readonly actionSize?: number;
-  readonly hiddenUnits?: number;
-  readonly actorLearningRate?: number;
-  readonly criticLearningRate?: number;
-  readonly gamma?: number;
-  readonly tau?: number;
-  readonly policyNoise?: number;
-  readonly noiseClip?: number;
-  readonly policyDelay?: number;
-  readonly seed?: number;
-}
-
 export interface Td3TrainResult {
   readonly criticLoss: number;
   readonly actorLoss: number | null;
   readonly actorUpdated: boolean;
-}
-
-export interface Td3Description {
-  readonly algorithm: "TD3";
-  readonly observationSize: number;
-  readonly actionSize: number;
-  readonly hiddenUnits: number;
-  readonly actorParameters: number;
-  readonly criticParametersEach: number;
-  readonly onlineTrainableParameters: number;
-  readonly totalParameters: number;
-  readonly actorLearningRate: number;
-  readonly criticLearningRate: number;
-  readonly gamma: number;
-  readonly tau: number;
-  readonly policyNoise: number;
-  readonly noiseClip: number;
-  readonly policyDelay: number;
 }
 
 export interface Td3SerializedTensor {
@@ -73,44 +41,6 @@ export interface Td3AgentState {
   readonly version: 1;
   readonly updateCount: number;
   readonly networks: readonly (readonly Td3SerializedTensor[])[];
-}
-
-const DEFAULTS = {
-  observationSize: CONTINUOUS_OBSERVATION_SIZE,
-  actionSize: CONTINUOUS_ACTION_SIZE,
-  hiddenUnits: 128,
-  actorLearningRate: 0.0003,
-  criticLearningRate: 0.001,
-  gamma: 0.99,
-  tau: 0.005,
-  policyNoise: 0.2,
-  noiseClip: 0.5,
-  policyDelay: 2,
-  seed: 7,
-} as const;
-
-export function describeTd3Config(config: Td3Config = {}): Td3Description {
-  const observationSize = config.observationSize ?? DEFAULTS.observationSize;
-  const actionSize = config.actionSize ?? DEFAULTS.actionSize;
-  const hiddenUnits = config.hiddenUnits ?? DEFAULTS.hiddenUnits;
-  const actorParameters = (observationSize + 1) * hiddenUnits
-    + (hiddenUnits + 1) * hiddenUnits
-    + (hiddenUnits + 1) * actionSize;
-  const criticParametersEach = (observationSize + actionSize + 1) * hiddenUnits
-    + (hiddenUnits + 1) * hiddenUnits
-    + (hiddenUnits + 1);
-  return {
-    algorithm: "TD3", observationSize, actionSize, hiddenUnits,
-    actorParameters, criticParametersEach,
-    onlineTrainableParameters: actorParameters + criticParametersEach * 2,
-    totalParameters: actorParameters * 2 + criticParametersEach * 4,
-    actorLearningRate: config.actorLearningRate ?? DEFAULTS.actorLearningRate,
-    criticLearningRate: config.criticLearningRate ?? DEFAULTS.criticLearningRate,
-    gamma: config.gamma ?? DEFAULTS.gamma, tau: config.tau ?? DEFAULTS.tau,
-    policyNoise: config.policyNoise ?? DEFAULTS.policyNoise,
-    noiseClip: config.noiseClip ?? DEFAULTS.noiseClip,
-    policyDelay: config.policyDelay ?? DEFAULTS.policyDelay,
-  };
 }
 
 function dense(units: number, activation: "relu" | "tanh" | undefined, seed: number) {
@@ -164,19 +94,7 @@ export class Td3Agent<TAction = ContinuousDrivingAction> {
   private updateCount = 0;
 
   constructor(config: Td3Config = {}, private readonly actionCodec: Td3ActionCodec<TAction> = CONTINUOUS_ACTION_CODEC as unknown as Td3ActionCodec<TAction>) {
-    this.config = {
-      observationSize: config.observationSize ?? DEFAULTS.observationSize,
-      actionSize: config.actionSize ?? actionCodec.size,
-      hiddenUnits: config.hiddenUnits ?? DEFAULTS.hiddenUnits,
-      actorLearningRate: config.actorLearningRate ?? DEFAULTS.actorLearningRate,
-      criticLearningRate: config.criticLearningRate ?? DEFAULTS.criticLearningRate,
-      gamma: config.gamma ?? DEFAULTS.gamma,
-      tau: config.tau ?? DEFAULTS.tau,
-      policyNoise: config.policyNoise ?? DEFAULTS.policyNoise,
-      noiseClip: config.noiseClip ?? DEFAULTS.noiseClip,
-      policyDelay: config.policyDelay ?? DEFAULTS.policyDelay,
-      seed: config.seed ?? DEFAULTS.seed,
-    };
+    this.config = resolveTd3Config(config, actionCodec.size);
     if (this.config.actionSize !== actionCodec.size) throw new RangeError("TD3 action size must match its action codec.");
     this.actor = createActor(this.config, 0);
     this.targetActor = createActor(this.config, 100);

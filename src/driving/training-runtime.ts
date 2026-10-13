@@ -2,7 +2,7 @@ import type { TrainerStatus, TrainerWorkerMode } from "../workers/driving-traine
 import { DqnAgent, createEpsilonSchedule } from "./dqn-agent";
 import { DrivingEnvironment, type DrivingEvent } from "./driving-environment";
 import type { DrivingMap } from "./maps";
-import { ReplayBuffer, type DrivingExperience } from "./replay-buffer";
+import { ReplayBuffer, type Experience } from "@/rl/replay-buffer";
 import { drivingObservationToVector, type DrivingObservation } from "./types";
 import type { EnvironmentStep } from "../domain/environment-adapter";
 import type { RuntimeMode } from "../domain/environment-adapter";
@@ -42,7 +42,7 @@ export interface EpisodeSummary {
   readonly totalReward: number;
 }
 
-export interface ReplaySampleEvidence extends DrivingExperience {
+export interface ReplaySampleEvidence extends Experience<number> {
   readonly targetQ: number;
   readonly tdError: number;
 }
@@ -72,7 +72,7 @@ function createSeededRandom(seed: number): () => number {
 export class DrivingTrainingRuntime {
   private environment: DrivingEnvironment;
   private readonly agent: DqnAgent;
-  private readonly replay: ReplayBuffer;
+  private readonly replay: ReplayBuffer<number>;
   private readonly random: () => number;
   private readonly warmupSteps: number;
   private readonly batchSize: number;
@@ -100,7 +100,7 @@ export class DrivingTrainingRuntime {
       hiddenUnits: config.hiddenUnits,
       seed: config.seed,
     });
-    this.replay = new ReplayBuffer(config.replayCapacity ?? 50_000);
+    this.replay = new ReplayBuffer<number>(config.replayCapacity ?? 50_000);
     this.random = createSeededRandom(config.seed ?? 1);
     this.warmupSteps = config.warmupSteps ?? 1_000;
     this.batchSize = config.batchSize ?? 64;

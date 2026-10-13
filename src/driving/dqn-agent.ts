@@ -1,6 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
 
-import type { DrivingExperience } from "./replay-buffer";
+import type { Experience } from "@/rl/replay-buffer";
 
 export interface EpsilonScheduleConfig {
   readonly start: number;
@@ -133,7 +133,7 @@ export class DqnAgent {
     return { action: qValues.indexOf(bestValue), source: "exploit", qValues };
   }
 
-  async trainBatch(batch: readonly DrivingExperience[]): Promise<DqnBatchResult> {
+  async trainBatch(batch: readonly Experience<number>[]): Promise<DqnBatchResult> {
     if (batch.length === 0) {
       throw new RangeError("A DQN batch cannot be empty.");
     }
@@ -145,7 +145,7 @@ export class DqnAgent {
     );
     const currentQValues = this.predictBatch(
       this.onlineModel,
-      batch.map((experience) => experience.observation),
+      batch.map((experience) => [...experience.observation]),
     );
     const targets = batch.map((experience, index) =>
       computeBellmanTarget(
@@ -162,7 +162,7 @@ export class DqnAgent {
     });
 
     const observations = tf.tensor2d(
-      batch.map((experience) => experience.observation),
+      batch.map((experience) => [...experience.observation]),
       [batch.length, this.config.observationSize],
     );
     const labels = tf.tensor2d(expectedQValues, [batch.length, this.config.actionCount]);
@@ -277,7 +277,7 @@ export class DqnAgent {
     });
   }
 
-  private validateExperience(experience: DrivingExperience): void {
+  private validateExperience(experience: Experience<number>): void {
     if (
       experience.observation.length !== this.config.observationSize ||
       experience.nextObservation.length !== this.config.observationSize

@@ -3,7 +3,7 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Too
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { describeTd3Config } from "@/rl/continuous/td3-agent";
+import { describeTd3Config } from "@/rl/continuous/td3-config";
 import type { Subject2HistoryPoint } from "@/hooks/use-subject2-lab";
 import type { Subject2Snapshot } from "@/subject2/subject2-runtime";
 import { summarizeSubject2Controls } from "@/subject2/subject2-telemetry";
