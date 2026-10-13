@@ -1,0 +1,1645 @@
+{
+ "generatedAt": "2026-10-13T15:39:19.764Z",
+ "head": "881392727714cb73c88305fe5e209346d3e01a74",
+ "root": "D:\\workspace\\reinforcement-learning\\qlearning",
+ "fileCount": 162,
+ "countsByTopDir": {
+  ".github": 1,
+  "(root)": 18,
+  "docs": 2,
+  "scripts": 1,
+  "skills": 1,
+  "src": 137,
+  "tasks": 2
+ },
+ "ignoredTopLevel": [
+  ".vite-audit.err.log",
+  ".vite-audit.log",
+  "dist",
+  "node_modules",
+  "tsconfig.app.tsbuildinfo",
+  "tsconfig.node.tsbuildinfo"
+ ],
+ "entries": {
+  ".github/workflows/pages.yml": {
+   "size": 1303,
+   "mtime": 1791859959565,
+   "sha": "5fff7b2425373ba829c49f1290a13afb491103f7e1e78797c33b06b3a056e0f4",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "5fff7b2425373ba829c49f1290a13afb491103f7e1e78797c33b06b3a056e0f4",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  ".gitignore": {
+   "size": 123,
+   "mtime": 1791510670677,
+   "sha": "4e972b8a8144e62f50cb92989e9c2990499bfcacabee0eb2d9da7cd3f5599660",
+   "tracked": true,
+   "class": "other",
+   "lastReadHash": "4e972b8a8144e62f50cb92989e9c2990499bfcacabee0eb2d9da7cd3f5599660",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "CHANGELOG.md": {
+   "size": 1046,
+   "mtime": 1791861549961,
+   "sha": "d23dd2469fd65374ab610e95d2c103293ec172a30883cd9330c42fbe30af7006",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "d23dd2469fd65374ab610e95d2c103293ec172a30883cd9330c42fbe30af7006",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "DRIVING_PROTOTYPE.md": {
+   "size": 10799,
+   "mtime": 1791694638628,
+   "sha": "e2bbd287d2322be52abf33b4e309a2854f97d28e595f4fe28b3b54e233b86daf",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "e2bbd287d2322be52abf33b4e309a2854f97d28e595f4fe28b3b54e233b86daf",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "PROTOTYPE.md": {
+   "size": 6470,
+   "mtime": 1791513998694,
+   "sha": "57d76b4fccb2849151af9a3b89a5919014bbd7e36c8ab2b8345c23fc4f13006e",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "57d76b4fccb2849151af9a3b89a5919014bbd7e36c8ab2b8345c23fc4f13006e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "PUBLISH_ARCHITECTURE_AUDIT.md": {
+   "size": 6101,
+   "mtime": 1791859424597,
+   "sha": "1289fb0830731b7e529a276389f0004176647f4849c566e6f7794059fa0936d6",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "1289fb0830731b7e529a276389f0004176647f4849c566e6f7794059fa0936d6",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "README.md": {
+   "size": 5409,
+   "mtime": 1791861233954,
+   "sha": "832b30ee414e9cf1939734a5812df630eb5534a04b9a9b66575db7d253fc816a",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "832b30ee414e9cf1939734a5812df630eb5534a04b9a9b66575db7d253fc816a",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "SUBJECT2_DESIGN.md": {
+   "size": 4083,
+   "mtime": 1791701459405,
+   "sha": "e63da726633af2faf02c58271e32e28357d629fb38bc34c7a480ee53dbea5691",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "e63da726633af2faf02c58271e32e28357d629fb38bc34c7a480ee53dbea5691",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "SUBJECT2_QUALITY_AUDIT.md": {
+   "size": 5307,
+   "mtime": 1791783723811,
+   "sha": "5ef9f7240a98284c8763151acc0949bf9d38e22b545318d8476fcf6c69c352b3",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "5ef9f7240a98284c8763151acc0949bf9d38e22b545318d8476fcf6c69c352b3",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "components.json": {
+   "size": 350,
+   "mtime": 1791510208390,
+   "sha": "7aa310fa06680687d9d5d0eda0b05d952e4bbd5966bac78bc697701a2cfcc6f0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7aa310fa06680687d9d5d0eda0b05d952e4bbd5966bac78bc697701a2cfcc6f0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "design.md": {
+   "size": 3077,
+   "mtime": 1791513998701,
+   "sha": "40a6f018b3b520d3d2b90db55a955f2d769d8edc26a1bffd3d492fc958b69cac",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "40a6f018b3b520d3d2b90db55a955f2d769d8edc26a1bffd3d492fc958b69cac",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "docs/RL_LAB_METHOD.md": {
+   "size": 7176,
+   "mtime": 1791861233953,
+   "sha": "0de01eaa323f21cb37af011d462b8cfdabe2287901aa762a6bd3b738359c97ac",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "0de01eaa323f21cb37af011d462b8cfdabe2287901aa762a6bd3b738359c97ac",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "docs/TUTORIAL_COMPANION_ARCHITECTURE.md": {
+   "size": 5678,
+   "mtime": 1791860687100,
+   "sha": "6068276dd4bb66bb9d92b063cfd9a113577942f26130a7536e37b2190e7de3c5",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "6068276dd4bb66bb9d92b063cfd9a113577942f26130a7536e37b2190e7de3c5",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "eslint.config.js": {
+   "size": 654,
+   "mtime": 1791509903705,
+   "sha": "6d6367ec17e5e38548f276d7116b5e1c29762748f0638757b0137897c419e282",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "6d6367ec17e5e38548f276d7116b5e1c29762748f0638757b0137897c419e282",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "index.html": {
+   "size": 405,
+   "mtime": 1791509903699,
+   "sha": "120ec6e5a03eb6c7461f4e6dac3d786aed4a9a3d52c5f0297a2df19859eae413",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "120ec6e5a03eb6c7461f4e6dac3d786aed4a9a3d52c5f0297a2df19859eae413",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "package-lock.json": {
+   "size": 225760,
+   "mtime": 1791861530920,
+   "sha": "b51a04634a50fab2d97d27864feee067c08dbbfcc10eea47db47eb73a1300816",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b51a04634a50fab2d97d27864feee067c08dbbfcc10eea47db47eb73a1300816",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "package.json": {
+   "size": 1684,
+   "mtime": 1791861530915,
+   "sha": "85a88b988ce5834799534578e92a0231ede1ef2ba7a74869c6d28b0d05b41402",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "85a88b988ce5834799534578e92a0231ede1ef2ba7a74869c6d28b0d05b41402",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "scripts/import-osm-city.ps1": {
+   "size": 8339,
+   "mtime": 1791694936493,
+   "sha": "a2e4f19777a9489cd1d1b69495cbf8903d7d68d5a2facb6ddc7ea71501a67e5a",
+   "tracked": true,
+   "class": "other",
+   "lastReadHash": "a2e4f19777a9489cd1d1b69495cbf8903d7d68d5a2facb6ddc7ea71501a67e5a",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "skills/rl-teaching-lab/SKILL.md": {
+   "size": 5859,
+   "mtime": 1791905883389,
+   "sha": "81d1936f4fabe7a0dd6a8ab7ba5734b246bb343d3d838a0d2ac161a0656744fa",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "81d1936f4fabe7a0dd6a8ab7ba5734b246bb343d3d838a0d2ac161a0656744fa",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:38:46.961Z"
+  },
+  "src/App.test.tsx": {
+   "size": 5220,
+   "mtime": 1791860924754,
+   "sha": "8e18448ee004cffeb36ddfe11964934279479a9b6884bbcba8ff235965acf8a1",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "8e18448ee004cffeb36ddfe11964934279479a9b6884bbcba8ff235965acf8a1",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/App.tsx": {
+   "size": 6741,
+   "mtime": 1791861526192,
+   "sha": "963fa017abde0e31ff690fff0a4a332c9987a275efc8c339bfb56ebdcb9341c2",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "963fa017abde0e31ff690fff0a4a332c9987a275efc8c339bfb56ebdcb9341c2",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/app-navigation.test.tsx": {
+   "size": 1895,
+   "mtime": 1791859536767,
+   "sha": "43e0959805dcb1885ea679f4c0cb94fdebbfe68d8b48a61a736a7b9f6f258755",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "43e0959805dcb1885ea679f4c0cb94fdebbfe68d8b48a61a736a7b9f6f258755",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/catalog/experiment-catalog.test.ts": {
+   "size": 1899,
+   "mtime": 1791860715554,
+   "sha": "3c86030ebd0179c2cd87ad39e8ce500c1da3e627546a73739a22c370406089d3",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3c86030ebd0179c2cd87ad39e8ce500c1da3e627546a73739a22c370406089d3",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/catalog/experiment-catalog.ts": {
+   "size": 16431,
+   "mtime": 1791860967815,
+   "sha": "ffff07ee77df9ed2b7b5825793e1d406ac2359dfac844136f6349801db246821",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "ffff07ee77df9ed2b7b5825793e1d406ac2359dfac844136f6349801db246821",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/app-shell.tsx": {
+   "size": 2223,
+   "mtime": 1791860847066,
+   "sha": "c4eed085dcf1f168a29c9ac0e7bf80724fdecd3d996e495a89d7c2e2ca3906d5",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "c4eed085dcf1f168a29c9ac0e7bf80724fdecd3d996e495a89d7c2e2ca3906d5",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/data-workbench.tsx": {
+   "size": 6469,
+   "mtime": 1791860847069,
+   "sha": "3f6786ab6c9c04a4ff1bd969fdd4e250f21226616e982507983b1517167844d2",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3f6786ab6c9c04a4ff1bd969fdd4e250f21226616e982507983b1517167844d2",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/dqn-driving-lab.tsx": {
+   "size": 6652,
+   "mtime": 1791859766168,
+   "sha": "1689c88958d9aa22d63c8bc5552d9765370a3eb3f85ba615b6a8c6dabe7eb1ca",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "1689c88958d9aa22d63c8bc5552d9765370a3eb3f85ba615b6a8c6dabe7eb1ca",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driver-view-3d.tsx": {
+   "size": 18422,
+   "mtime": 1791694593866,
+   "sha": "b0fdf10202b64e1d7c693b04ad7ade6ba983b9e6fbbff2dcd4df7d5385e64925",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b0fdf10202b64e1d7c693b04ad7ade6ba983b9e6fbbff2dcd4df7d5385e64925",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driving-canvas.test.tsx": {
+   "size": 1267,
+   "mtime": 1791632189896,
+   "sha": "6a5de5ea91804d3d03380832e1227ac6c3b1976b7de4cfc7a6fad5b6c6ad752d",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "6a5de5ea91804d3d03380832e1227ac6c3b1976b7de4cfc7a6fad5b6c6ad752d",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driving-canvas.tsx": {
+   "size": 4464,
+   "mtime": 1791632258958,
+   "sha": "72e8e52d59509f1549f804796144817c168604380ee0b86521f80e52fc650df8",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "72e8e52d59509f1549f804796144817c168604380ee0b86521f80e52fc650df8",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driving-evidence.test.tsx": {
+   "size": 1977,
+   "mtime": 1791642006615,
+   "sha": "acda748131da4d28431f6dab4a9fda9097e1faf546690efb35bafc427f581328",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "acda748131da4d28431f6dab4a9fda9097e1faf546690efb35bafc427f581328",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driving-evidence.tsx": {
+   "size": 4498,
+   "mtime": 1791641728686,
+   "sha": "48ab639a53586d7d901fed7f48dcaabb3e750329b66d9b303b336661c59861cd",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "48ab639a53586d7d901fed7f48dcaabb3e750329b66d9b303b336661c59861cd",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driving-lab.test.tsx": {
+   "size": 1639,
+   "mtime": 1791694413446,
+   "sha": "6bab030cb81e73607ee9a965281bb72d51205f7b5abd919d087657943e814652",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "6bab030cb81e73607ee9a965281bb72d51205f7b5abd919d087657943e814652",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/driving-lab.tsx": {
+   "size": 15237,
+   "mtime": 1791694497747,
+   "sha": "055d664d7ed0b15975cd759d0cb13495d56dc04ff225213a3557b36ce336aad8",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "055d664d7ed0b15975cd759d0cb13495d56dc04ff225213a3557b36ce336aad8",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/driving/fleet-city-canvas.tsx": {
+   "size": 12399,
+   "mtime": 1791694475235,
+   "sha": "75fd00d5ab15e46d497fe31610467244fd5119f1a1f947519f97a8733493f0bd",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "75fd00d5ab15e46d497fe31610467244fd5119f1a1f947519f97a8733493f0bd",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/environment-grid.test.tsx": {
+   "size": 2085,
+   "mtime": 1791514222938,
+   "sha": "b67b55ff02bdd9124675d0629e6ece9ece202c77948a17480073fdeed6bbe401",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b67b55ff02bdd9124675d0629e6ece9ece202c77948a17480073fdeed6bbe401",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/environment-grid.tsx": {
+   "size": 7836,
+   "mtime": 1791514297623,
+   "sha": "2a5e9164d1eb198e5ce265d14cafb83d3060c80d3cd5cf11f1302952686c7520",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "2a5e9164d1eb198e5ce265d14cafb83d3060c80d3cd5cf11f1302952686c7520",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/learning/companion-learning-panel.test.tsx": {
+   "size": 1472,
+   "mtime": 1791860967818,
+   "sha": "b8267781bc652abfdbe35574bf6f08262406ecf4f045ea8bddb6fe4e030adcf6",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b8267781bc652abfdbe35574bf6f08262406ecf4f045ea8bddb6fe4e030adcf6",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/learning/companion-learning-panel.tsx": {
+   "size": 5989,
+   "mtime": 1791861046381,
+   "sha": "3a36265ff9e9048006cfaa995a27ca212c7241bbe295d7521880d5bbfd9bfa37",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3a36265ff9e9048006cfaa995a27ca212c7241bbe295d7521880d5bbfd9bfa37",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/metrics-panel.tsx": {
+   "size": 3699,
+   "mtime": 1791514158970,
+   "sha": "7bb2945d5b188b6b8cd470e00a8982053af0f9901c987210262c68814d5190dc",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7bb2945d5b188b6b8cd470e00a8982053af0f9901c987210262c68814d5190dc",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/parameter-panel.tsx": {
+   "size": 3434,
+   "mtime": 1791510257556,
+   "sha": "723950657d33c21579ceebe772d19436ea6b193b89976a2d86c5c548385d657e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "723950657d33c21579ceebe772d19436ea6b193b89976a2d86c5c548385d657e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/playback-controls.tsx": {
+   "size": 1008,
+   "mtime": 1791510281906,
+   "sha": "371b9c01a0156b5bcbc6dd8d8b4aecd82dabe84e4cd0c485ba8cf1b5cc6b901f",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "371b9c01a0156b5bcbc6dd8d8b4aecd82dabe84e4cd0c485ba8cf1b5cc6b901f",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-checkpoint-panel.test.tsx": {
+   "size": 1412,
+   "mtime": 1791802267065,
+   "sha": "eca10110be464048333ed364a712089ff3f18ed6425eea14c772bb68a2be32c1",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "eca10110be464048333ed364a712089ff3f18ed6425eea14c772bb68a2be32c1",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-checkpoint-panel.tsx": {
+   "size": 4243,
+   "mtime": 1791802300598,
+   "sha": "2623a2598e705efe9a514a1ca87309b845c353547d2e08aa5820338239156599",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "2623a2598e705efe9a514a1ca87309b845c353547d2e08aa5820338239156599",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-course-canvas.test.tsx": {
+   "size": 2169,
+   "mtime": 1791776033383,
+   "sha": "8a082ccb5d70b21ca11a2e39cb827bfb3c256030faaff3216dfb75a8ab40af7f",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "8a082ccb5d70b21ca11a2e39cb827bfb3c256030faaff3216dfb75a8ab40af7f",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-course-canvas.tsx": {
+   "size": 8396,
+   "mtime": 1791774897389,
+   "sha": "4d48e86a30ab82f2a312d493ebb76b1411bae9c2cd0d16d3e3d7707774e732e6",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4d48e86a30ab82f2a312d493ebb76b1411bae9c2cd0d16d3e3d7707774e732e6",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-driver-view-3d.test.tsx": {
+   "size": 1215,
+   "mtime": 1791802412110,
+   "sha": "232ef006f53e5b467503aefd56efda5ef3a445ef9fd7b7fd0681bda9afddc4a0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "232ef006f53e5b467503aefd56efda5ef3a445ef9fd7b7fd0681bda9afddc4a0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-driver-view-3d.tsx": {
+   "size": 8771,
+   "mtime": 1791802412106,
+   "sha": "12760eeb6c69264c5baf12c69a2938649b95649aeb81270da0e1f2b4ccc73f82",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "12760eeb6c69264c5baf12c69a2938649b95649aeb81270da0e1f2b4ccc73f82",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-lab.test.tsx": {
+   "size": 2051,
+   "mtime": 1791802820613,
+   "sha": "b5dc61a911492a612a5acc01b6aa2739157cfb0b50dfb70adc0a472f9c2a7d2f",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b5dc61a911492a612a5acc01b6aa2739157cfb0b50dfb70adc0a472f9c2a7d2f",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-lab.tsx": {
+   "size": 16819,
+   "mtime": 1791859652827,
+   "sha": "ce019a7bdf0996420590fcab1767bad29a46538530e1b072703ebcc15b3c0691",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "ce019a7bdf0996420590fcab1767bad29a46538530e1b072703ebcc15b3c0691",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/subject2/subject2-learning-panel.tsx": {
+   "size": 12151,
+   "mtime": 1791861163067,
+   "sha": "f9999041cf5eb8a5407354ce95bd051e01649d203c26e62be4e1d06ec1b8cbec",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "f9999041cf5eb8a5407354ce95bd051e01649d203c26e62be4e1d06ec1b8cbec",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/ui/badge.tsx": {
+   "size": 353,
+   "mtime": 1791510208397,
+   "sha": "6421503a3fc2a338e23360f74baa22ee5f3787f111d721b5e56099729b013e3e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "6421503a3fc2a338e23360f74baa22ee5f3787f111d721b5e56099729b013e3e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/ui/button.tsx": {
+   "size": 1265,
+   "mtime": 1791802412117,
+   "sha": "388c65b0c2baf3626158fc5dc09404df203d42e988aecf2d26526accf595526d",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "388c65b0c2baf3626158fc5dc09404df203d42e988aecf2d26526accf595526d",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/ui/card.tsx": {
+   "size": 572,
+   "mtime": 1791510208396,
+   "sha": "7fdd673b462ab3adc4eb5304974ef84a989ba6d8838980a4d682b6b381f7b4d1",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7fdd673b462ab3adc4eb5304974ef84a989ba6d8838980a4d682b6b381f7b4d1",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/ui/slider.tsx": {
+   "size": 673,
+   "mtime": 1791510208399,
+   "sha": "c34b4a4e3d5d358b0c4211ab26ba30837b0ac291a3379a405f530a508f7c82e4",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "c34b4a4e3d5d358b0c4211ab26ba30837b0ac291a3379a405f530a508f7c82e4",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/components/ui/tabs.tsx": {
+   "size": 929,
+   "mtime": 1791510208398,
+   "sha": "9adfd9acc69ecbb159d82e100f628e9e46d8ed59af17718b2d7706d15ae917ca",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "9adfd9acc69ecbb159d82e100f628e9e46d8ed59af17718b2d7706d15ae917ca",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/cliff-walking-adapter.test.ts": {
+   "size": 706,
+   "mtime": 1791631249385,
+   "sha": "e4a3531ead07593d87eb5968cd9afc8269f260eaf73f146902b84b3893418034",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "e4a3531ead07593d87eb5968cd9afc8269f260eaf73f146902b84b3893418034",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/cliff-walking-adapter.ts": {
+   "size": 1132,
+   "mtime": 1791631249387,
+   "sha": "0cb63d28327aed6812463f05914f9b687aad54418edbe84b680efe0ad7c70a0f",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "0cb63d28327aed6812463f05914f9b687aad54418edbe84b680efe0ad7c70a0f",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/cliff-walking.test.ts": {
+   "size": 4304,
+   "mtime": 1791514499272,
+   "sha": "367efd98189ecb0d5b81d60a2696a5c3f1d2703007131392847525d97593851b",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "367efd98189ecb0d5b81d60a2696a5c3f1d2703007131392847525d97593851b",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/cliff-walking.ts": {
+   "size": 5127,
+   "mtime": 1791514076436,
+   "sha": "3b3078a126c9033782d596a1575412876bf4d1c6da875ee06a60f02325f54f4b",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3b3078a126c9033782d596a1575412876bf4d1c6da875ee06a60f02325f54f4b",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/environment-adapter.test.ts": {
+   "size": 1463,
+   "mtime": 1791631000388,
+   "sha": "ccb1d0cd1035c55de2bcb72bd2ee1f1391ecd00d4f46226e403038506e15eaa1",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "ccb1d0cd1035c55de2bcb72bd2ee1f1391ecd00d4f46226e403038506e15eaa1",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/environment-adapter.ts": {
+   "size": 705,
+   "mtime": 1791861010324,
+   "sha": "bb04328a61940e5e1d909d672deb440f9e32f1f97d6de9aed1e143b51000dee4",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "bb04328a61940e5e1d909d672deb440f9e32f1f97d6de9aed1e143b51000dee4",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/learning-strategy.ts": {
+   "size": 1473,
+   "mtime": 1791514482264,
+   "sha": "91eb4d4da31ec24e89881657536a27992a90abdf1e1955873c1d7906a907ad5a",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "91eb4d4da31ec24e89881657536a27992a90abdf1e1955873c1d7906a907ad5a",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/q-table.ts": {
+   "size": 2875,
+   "mtime": 1791514076441,
+   "sha": "7da1f86df08fdc20fdb9cde169a94fc44645a8825d33dade9f3311727af589ab",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7da1f86df08fdc20fdb9cde169a94fc44645a8825d33dade9f3311727af589ab",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/training-session.test.ts": {
+   "size": 3540,
+   "mtime": 1791514499275,
+   "sha": "3f56b1e143e08267ffab3c2e96fed37d89896c3dc87ff82e3965a393abd2f12a",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3f56b1e143e08267ffab3c2e96fed37d89896c3dc87ff82e3965a393abd2f12a",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/domain/training-session.ts": {
+   "size": 3642,
+   "mtime": 1791631249397,
+   "sha": "4eab558f6600a12f73687499b9f68c7641099ef17f156ad1b054b6fcfa5b2175",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4eab558f6600a12f73687499b9f68c7641099ef17f156ad1b054b6fcfa5b2175",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/driving/city-map.test.ts": {
+   "size": 2444,
+   "mtime": 1791696394528,
+   "sha": "71c4be7b83c80bfd9f66c6eda37f08b7f093caf1720461b63c512d79673a2af9",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/city-map.ts": {
+   "size": 5802,
+   "mtime": 1791859876684,
+   "sha": "9bb576c82a77f4a1affa1ca5a9a0f52e378df96d58109e01754381c5dd2b9ee3",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/continuous-control.ts": {
+   "size": 1371,
+   "mtime": 1791647421694,
+   "sha": "8f2409ad2e187d9e5aaedf4a170a09148051db1fa677e41b3bcfe3c1eec97a8e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/continuous-driving-environment.test.ts": {
+   "size": 2485,
+   "mtime": 1791650578328,
+   "sha": "2960cec8e2d4312119d5efb138f19e9f0532121509204ca9c6d81c42646e7efe",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/continuous-driving-environment.ts": {
+   "size": 6260,
+   "mtime": 1791859876688,
+   "sha": "91db93dd524bdf94d3a3948f9a9e7a3e652b964f1e719dc9468b106021753969",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/curriculum.ts": {
+   "size": 1266,
+   "mtime": 1791632106355,
+   "sha": "d07e5f6aedc9d036aec73ecae693302d8bcb428c89edad8f52372d4920411db8",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/dqn-agent.test.ts": {
+   "size": 2432,
+   "mtime": 1791861046388,
+   "sha": "5bb9e651be15f628ad6209f59fb9b593e1328b7de3d5ceccc1a3760ce417de4c",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/dqn-agent.ts": {
+   "size": 9140,
+   "mtime": 1791861095522,
+   "sha": "63f9c3056e88790cd626c8040a0ecbdcdca7eede094fc49cb3f436db1622602c",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "63f9c3056e88790cd626c8040a0ecbdcdca7eede094fc49cb3f436db1622602c",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/driving/driving-environment.test.ts": {
+   "size": 2367,
+   "mtime": 1791634000835,
+   "sha": "319af0f41896cfd3a29365a1fda402373171d78140c379eea52060b39ae66cb0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/driving-environment.ts": {
+   "size": 5785,
+   "mtime": 1791859876693,
+   "sha": "7b68b1979833f6e91872f232198b7e91a11c77d991684f21f88bb087791827f4",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7b68b1979833f6e91872f232198b7e91a11c77d991684f21f88bb087791827f4",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/driving/evaluator.test.ts": {
+   "size": 1448,
+   "mtime": 1791634092623,
+   "sha": "174f2509ff22b17a6a03f62c40827eca276f691577220baecdc6b772a1985a22",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/evaluator.ts": {
+   "size": 4591,
+   "mtime": 1791859876696,
+   "sha": "e8905bd182adcf0acc32d62920a3d99450a20058f652bb172fe9bb15b66f48b3",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/lane-route.test.ts": {
+   "size": 831,
+   "mtime": 1791694413437,
+   "sha": "18d077fa88df26d3e6d216f797d7c3f456293108eefadd83c98296aa0d10da63",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/lane-route.ts": {
+   "size": 1298,
+   "mtime": 1791859876698,
+   "sha": "1b75b4f4819952c79069b06772d5f98773d451e989f961ad8d49bd1474a367f8",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/maps.test.ts": {
+   "size": 1492,
+   "mtime": 1791859876704,
+   "sha": "197b35e8e5ebafd7a9dbc9e4076ebc19a6f0470b7ec6c6fc42fcb509a44081e4",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/maps.ts": {
+   "size": 2479,
+   "mtime": 1791859876700,
+   "sha": "23f7fff72c42742091bd2f5758e63886b6d210b7e8725bb959b84864e3d5dcc7",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/model-format.test.ts": {
+   "size": 1605,
+   "mtime": 1791634033647,
+   "sha": "c0ad9f0f29a9747ebadabe34610ae765eb9e157323b0e27d4424411bf7a998ff",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/model-format.ts": {
+   "size": 2347,
+   "mtime": 1791634062898,
+   "sha": "d584818fe643c25c2242eed4a4ec117e6589878f8e7a4c853931fc0702706d14",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/osm-houten.generated.ts": {
+   "size": 157327,
+   "mtime": 1791694991682,
+   "sha": "012ee3c1eacda918cace13bf1d1f202995e50fce2aaaec146110dab12ac83b05",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/osm-milton-keynes.generated.ts": {
+   "size": 51767,
+   "mtime": 1791694972775,
+   "sha": "713ba4f37a4d2a48fd0b2bc3f8a54bd10801c6878eb23fe30afd61097643c45b",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/osm-vathorst.generated.ts": {
+   "size": 116171,
+   "mtime": 1791694965442,
+   "sha": "be154f441c3bf5640ad685563bcb659bd9e56edb97bff212b76bd3ac4cbbf180",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/radar.test.ts": {
+   "size": 2131,
+   "mtime": 1791647453235,
+   "sha": "e5e6e7ad53c03ff094a43911e2cfd93eb0a7b449ef2e08b1ecbc6175fc370268",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/radar.ts": {
+   "size": 5034,
+   "mtime": 1791859876706,
+   "sha": "0ffd109a0b8007dae67f52441363af74eab0d726e049aac958ca531c992b13c6",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/reward.test.ts": {
+   "size": 2575,
+   "mtime": 1791650578326,
+   "sha": "3af6f2743f06c0555fc053a7da99a2e4abc3efa0afe52b11d78df49ceea826a1",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/reward.ts": {
+   "size": 1435,
+   "mtime": 1791650611149,
+   "sha": "b8493cb4e031494cfdd4b3513ccd46148028be48ba1264a05de7dcd852147d54",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/scripted-driver.test.ts": {
+   "size": 1395,
+   "mtime": 1791632035798,
+   "sha": "ba5ce56c025a8c986233e4683d372ed1bd5fd665055838861aee8b30c0389a03",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/scripted-driver.ts": {
+   "size": 2837,
+   "mtime": 1791859876709,
+   "sha": "ba24eafb57410d9a9db4c7a329dcbe2a1975aab65e1caca192b892ce7fc0604d",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/sensors.test.ts": {
+   "size": 737,
+   "mtime": 1791644619488,
+   "sha": "46a7fa78711ed40d6a3fabd2120064fe4f63a5c263ea1968971c1fbf34d1be6e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/sensors.ts": {
+   "size": 1485,
+   "mtime": 1791859876713,
+   "sha": "86eb05c2e08cc020f79c06c58b24d1330e3e03f1029ff5d3a54e849d2d74975a",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/shared-fleet-runtime.test.ts": {
+   "size": 6478,
+   "mtime": 1791694413444,
+   "sha": "e60a7a2ace327d6e983feaacd29917fd5be79a39d827ee1ae2d58a3a8e4642bd",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/shared-fleet-runtime.ts": {
+   "size": 16737,
+   "mtime": 1791860743725,
+   "sha": "900006dfef4e4a0369ab9c61afeefad2ca50876a9fd4eb2c4edc94b82dcd3aa9",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/td3-agent.test.ts": {
+   "size": 4767,
+   "mtime": 1791859876724,
+   "sha": "eae0017d588d759e3e35039bd5ba3f38747f13635071ddb7495e645794970f94",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/training-runtime.test.ts": {
+   "size": 3970,
+   "mtime": 1791642037263,
+   "sha": "a5d1f2ebc0de914ca49c56969a2f5b3d3c85be66a6f06465ed14743e081a0eab",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/training-runtime.ts": {
+   "size": 8937,
+   "mtime": 1791861046391,
+   "sha": "325abb9400ae9a77c7cd5c137e3bf840865caf0f9896981c7a07af0495bd0a13",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/types.test.ts": {
+   "size": 2072,
+   "mtime": 1791631000393,
+   "sha": "90220a174fe661306669a8699d21377ca76f041403f99583f485414ec755bf18",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/types.ts": {
+   "size": 2851,
+   "mtime": 1791642755279,
+   "sha": "aef54197db0f74a73df621b23ed21ea671d6bba9750223f070a538b7e424327c",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "aef54197db0f74a73df621b23ed21ea671d6bba9750223f070a538b7e424327c",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/driving/vehicle-collision.test.ts": {
+   "size": 747,
+   "mtime": 1791694413440,
+   "sha": "74314b303b8840b0066e328879dca5514194e74398adaeaeecb93cab8b57fbc3",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/vehicle-collision.ts": {
+   "size": 1125,
+   "mtime": 1791694475190,
+   "sha": "b3dd014c95480f2b4d1db1a394ff3a7556cac96c0dc6ade3f4e5de3d8a5da897",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/vehicle-model.test.ts": {
+   "size": 1679,
+   "mtime": 1791644967053,
+   "sha": "7ae4f2660aaa289155d3ba227bad5490b847d675c2253c18062cb0b936f06498",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/driving/vehicle-model.ts": {
+   "size": 2210,
+   "mtime": 1791859876717,
+   "sha": "d615ac8ad14722accffa6e4e9e2372d90d4c139bb629bb77ba44ce7d6360ec62",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": null,
+   "lastReadCommit": null,
+   "lastReadAt": null
+  },
+  "src/exercise/update-q-value.ts": {
+   "size": 1074,
+   "mtime": 1791511809650,
+   "sha": "9a665aaa0609dabeb940098e8d88253ed256f957bd55f5ec45bfdb75c388f3d0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "9a665aaa0609dabeb940098e8d88253ed256f957bd55f5ec45bfdb75c388f3d0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-driving-lab.test.tsx": {
+   "size": 774,
+   "mtime": 1791859766165,
+   "sha": "4ff125a67d268e5b7d407978b7ee668daa56f872c8e95803c725fd6ff4b5a0dd",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4ff125a67d268e5b7d407978b7ee668daa56f872c8e95803c725fd6ff4b5a0dd",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-driving-lab.ts": {
+   "size": 7007,
+   "mtime": 1791859855662,
+   "sha": "717f860debf640baece7df2e188f4e65a15b1dcbd2712159e244e4a5fa5546a0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "717f860debf640baece7df2e188f4e65a15b1dcbd2712159e244e4a5fa5546a0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-lab-route.ts": {
+   "size": 1021,
+   "mtime": 1791860847063,
+   "sha": "7c0715aba3db61ca64b7a46abd3e8d7fa33ccedd1886bd3d2b97e50f108e6686",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7c0715aba3db61ca64b7a46abd3e8d7fa33ccedd1886bd3d2b97e50f108e6686",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-lab.ts": {
+   "size": 6033,
+   "mtime": 1791514083742,
+   "sha": "56affe1d0353bce523dba498264e4a9f443a12174b4ac4679fdae8d829917970",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "56affe1d0353bce523dba498264e4a9f443a12174b4ac4679fdae8d829917970",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-shared-fleet.ts": {
+   "size": 5264,
+   "mtime": 1791694497738,
+   "sha": "e89086d60e86c71bcf47ee7e23e942bcf9c19deb62f5eece56c8152f07dc5d10",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "e89086d60e86c71bcf47ee7e23e942bcf9c19deb62f5eece56c8152f07dc5d10",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-subject2-lab.ts": {
+   "size": 8558,
+   "mtime": 1791802412113,
+   "sha": "d731218e51bbb11bfffcdeb091615b7018659a3951f08448352da9f9529ab21d",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "d731218e51bbb11bfffcdeb091615b7018659a3951f08448352da9f9529ab21d",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/hooks/use-tensorflow-status.ts": {
+   "size": 774,
+   "mtime": 1791510377808,
+   "sha": "4263aa7dd9df4aeef62c6519ff1208b44361d960b8121b36c2bafda5d153f705",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4263aa7dd9df4aeef62c6519ff1208b44361d960b8121b36c2bafda5d153f705",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/lib/utils.ts": {
+   "size": 362,
+   "mtime": 1791510208392,
+   "sha": "625e62cf58b7b5eeaa3283a7f7d4e83f83dbf42e8f003cce08783225e51bc3cf",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "625e62cf58b7b5eeaa3283a7f7d4e83f83dbf42e8f003cce08783225e51bc3cf",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/main.tsx": {
+   "size": 237,
+   "mtime": 1791509903707,
+   "sha": "b0dcccc8495bd6668294527cd2958fca0f6b4e42eacb91a6540369c00ad99275",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b0dcccc8495bd6668294527cd2958fca0f6b4e42eacb91a6540369c00ad99275",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/rl/continuous/td3-agent.ts": {
+   "size": 12619,
+   "mtime": 1791861173371,
+   "sha": "00212a5f2060f89ed1d1efe73deb85802455c714f4dae25804f842f7e5b32a34",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "00212a5f2060f89ed1d1efe73deb85802455c714f4dae25804f842f7e5b32a34",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/rl/continuous/td3-config.ts": {
+   "size": 3141,
+   "mtime": 1791861192520,
+   "sha": "c2d0349d4e4bbab34d648d292eaa5a92511d032cdbac3df63c7d01545a6b2287",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "c2d0349d4e4bbab34d648d292eaa5a92511d032cdbac3df63c7d01545a6b2287",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/rl/replay-buffer.test.ts": {
+   "size": 1853,
+   "mtime": 1791861046393,
+   "sha": "4a905f0ed65d3f4e7cfd2978b534135c04540969748fb4ecf8d6800ec31a4169",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4a905f0ed65d3f4e7cfd2978b534135c04540969748fb4ecf8d6800ec31a4169",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/rl/replay-buffer.ts": {
+   "size": 2300,
+   "mtime": 1791861046383,
+   "sha": "330471c0b19168518c53b83d8886aad455b9a975ded308e416c42949ea2f1a8e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "330471c0b19168518c53b83d8886aad455b9a975ded308e416c42949ea2f1a8e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/simulation/geometry.ts": {
+   "size": 2149,
+   "mtime": 1791859855667,
+   "sha": "4f360f75b91bfb61ce15f4fc6b2e25a1a2137f2f8f5cb42ebb34353b14db3d11",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4f360f75b91bfb61ce15f4fc6b2e25a1a2137f2f8f5cb42ebb34353b14db3d11",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/styles.css": {
+   "size": 2098,
+   "mtime": 1791802857373,
+   "sha": "d938e5f312072ecdc2fccc933c9b7f522600f06b8ba2fa44465f0e197d617e71",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "d938e5f312072ecdc2fccc933c9b7f522600f06b8ba2fa44465f0e197d617e71",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-camera-geometry.ts": {
+   "size": 305,
+   "mtime": 1791802412101,
+   "sha": "c70a8b3d9ec6a80b26f97d8ed89e1f640d545963beebd86656eda9d2f9d38d8f",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "c70a8b3d9ec6a80b26f97d8ed89e1f640d545963beebd86656eda9d2f9d38d8f",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-checkpoint-store.test.ts": {
+   "size": 1191,
+   "mtime": 1791802001157,
+   "sha": "571708e3215dd13862e27fa0f3552b245b8ac2947aa45335e003796de57f081b",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "571708e3215dd13862e27fa0f3552b245b8ac2947aa45335e003796de57f081b",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-checkpoint-store.ts": {
+   "size": 3287,
+   "mtime": 1791859876728,
+   "sha": "a70d3f60d209353ff9208e8d1a9294f340f616da5761f7e228c2fe4a9ac5357b",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "a70d3f60d209353ff9208e8d1a9294f340f616da5761f7e228c2fe4a9ac5357b",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-collision.test.ts": {
+   "size": 1962,
+   "mtime": 1791776033375,
+   "sha": "17cc566eb083fa95f3c375db42ecee0d2a16536d3e87990d2f90121ba7720302",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "17cc566eb083fa95f3c375db42ecee0d2a16536d3e87990d2f90121ba7720302",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-collision.ts": {
+   "size": 4934,
+   "mtime": 1791859876730,
+   "sha": "a4a0ce59433a999aeea630d5480916a4ae733168ff92aeebff70d9f83b743433",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "a4a0ce59433a999aeea630d5480916a4ae733168ff92aeebff70d9f83b743433",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-course.test.ts": {
+   "size": 1008,
+   "mtime": 1791718123964,
+   "sha": "258b92aea74a295be1409d5537bc35d0db7fa900c6ef22492d2c314681c1782a",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "258b92aea74a295be1409d5537bc35d0db7fa900c6ef22492d2c314681c1782a",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-course.ts": {
+   "size": 2655,
+   "mtime": 1791699408652,
+   "sha": "2dd437c04d66a160c3ae016f01fde1217f6454e80b4ba0828eecc15196b7b58e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "2dd437c04d66a160c3ae016f01fde1217f6454e80b4ba0828eecc15196b7b58e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-display.test.ts": {
+   "size": 1100,
+   "mtime": 1791701589854,
+   "sha": "7d92b860afb0f7267567f92c29f2838df1f91e729a8a81bf31fe168e3305ba69",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7d92b860afb0f7267567f92c29f2838df1f91e729a8a81bf31fe168e3305ba69",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-display.ts": {
+   "size": 930,
+   "mtime": 1791859876732,
+   "sha": "7a110508496cb2ae837c00affd4e083e6b22cc2bc69bd19ae0b62cddb29434a6",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "7a110508496cb2ae837c00affd4e083e6b22cc2bc69bd19ae0b62cddb29434a6",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-environment.test.ts": {
+   "size": 16848,
+   "mtime": 1791798015397,
+   "sha": "4853a2f3df9f5de4da912edae033b4751f22dd357ee84a6e4507782aa69d2786",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "4853a2f3df9f5de4da912edae033b4751f22dd357ee84a6e4507782aa69d2786",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-environment.ts": {
+   "size": 14761,
+   "mtime": 1791859876736,
+   "sha": "f6ad717bc4ae566300f346392cc5715bf5150b4f5b441c2334158a0efac276ed",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "f6ad717bc4ae566300f346392cc5715bf5150b4f5b441c2334158a0efac276ed",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-reverse-feasibility.test.ts": {
+   "size": 3138,
+   "mtime": 1791859876738,
+   "sha": "13152a0260e03f0c2252c1f86c06da5a07d0dc8bc1bc2494c46f849372cfc3ca",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "13152a0260e03f0c2252c1f86c06da5a07d0dc8bc1bc2494c46f849372cfc3ca",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-reward.test.ts": {
+   "size": 3473,
+   "mtime": 1791797682851,
+   "sha": "330c93dc2530b646cf6488329fe2b5c3bf198420bec0fd9e2f625993a423b082",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "330c93dc2530b646cf6488329fe2b5c3bf198420bec0fd9e2f625993a423b082",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-reward.ts": {
+   "size": 3779,
+   "mtime": 1791798015394,
+   "sha": "df71d8596393325b5d522e1ce9b0f32a8f1b01f38bb54b26701dbe2547689d63",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "df71d8596393325b5d522e1ce9b0f32a8f1b01f38bb54b26701dbe2547689d63",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-runtime.test.ts": {
+   "size": 6312,
+   "mtime": 1791801933515,
+   "sha": "2318e853af565dac819a0774844451ea9ec10b9f86f0320bcad84b9534476e74",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "2318e853af565dac819a0774844451ea9ec10b9f86f0320bcad84b9534476e74",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-runtime.ts": {
+   "size": 15424,
+   "mtime": 1791861163064,
+   "sha": "5355eee74ea7fbc25f149714cebfafd127e61ac8ad20f3ed38741e57d7af6fb0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "5355eee74ea7fbc25f149714cebfafd127e61ac8ad20f3ed38741e57d7af6fb0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-scenario.test.ts": {
+   "size": 10093,
+   "mtime": 1791776033377,
+   "sha": "afc0ea01412e1cd48459242d3c64874fa047adfa564362c585c7f3cee2afa3d3",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "afc0ea01412e1cd48459242d3c64874fa047adfa564362c585c7f3cee2afa3d3",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-scenario.ts": {
+   "size": 15733,
+   "mtime": 1791785604347,
+   "sha": "9e515b3af19999bfd35d8ee819cff3a334620bc519438421cbd9da73815cde7a",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "9e515b3af19999bfd35d8ee819cff3a334620bc519438421cbd9da73815cde7a",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-sensors.test.ts": {
+   "size": 1329,
+   "mtime": 1791719176604,
+   "sha": "aae5e0bf951f3cc6c0b4cbd54f3106fca7d8169718798ddea11d4fc4c86df480",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "aae5e0bf951f3cc6c0b4cbd54f3106fca7d8169718798ddea11d4fc4c86df480",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-sensors.ts": {
+   "size": 2219,
+   "mtime": 1791719310398,
+   "sha": "c1572a930014d3ee90a441ca48430fc25dfa25dca79f9818dacb247411c21d48",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "c1572a930014d3ee90a441ca48430fc25dfa25dca79f9818dacb247411c21d48",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-standard.ts": {
+   "size": 1257,
+   "mtime": 1791797833027,
+   "sha": "e56f0e0e0ac51513ffdd35bb827af120ff080c377b4135d8117f40a4a6f4efde",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "e56f0e0e0ac51513ffdd35bb827af120ff080c377b4135d8117f40a4a6f4efde",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-telemetry.test.ts": {
+   "size": 780,
+   "mtime": 1791798125627,
+   "sha": "f314d1298bd1fead9f9612395839b965fcb1cdf256af105a4fda1befd92953fa",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "f314d1298bd1fead9f9612395839b965fcb1cdf256af105a4fda1befd92953fa",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-telemetry.ts": {
+   "size": 839,
+   "mtime": 1791798150868,
+   "sha": "a07875b0df6f349f6c5d8d8fdee8cfbf425a1d26d30c834f1f0018e32da9831c",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "a07875b0df6f349f6c5d8d8fdee8cfbf425a1d26d30c834f1f0018e32da9831c",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-vehicle.test.ts": {
+   "size": 6314,
+   "mtime": 1791795460735,
+   "sha": "22cc392b59b7371de12985ad02ea79682b2e1f65e4f3ef5b270d88fbf7fdfab5",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "22cc392b59b7371de12985ad02ea79682b2e1f65e4f3ef5b270d88fbf7fdfab5",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/subject2/subject2-vehicle.ts": {
+   "size": 6837,
+   "mtime": 1791859876744,
+   "sha": "fc9c8b601821c1175d85a3cdd21a909a5094ef6239976ae04507c3a2e4bfd5d3",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "fc9c8b601821c1175d85a3cdd21a909a5094ef6239976ae04507c3a2e4bfd5d3",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/test/setup.ts": {
+   "size": 395,
+   "mtime": 1791643357028,
+   "sha": "a2da5985bfcc5be9dd8234887d2660cde896dde267fdafe0e6fc740d8815396f",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "a2da5985bfcc5be9dd8234887d2660cde896dde267fdafe0e6fc740d8815396f",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/driving-trainer-protocol.test.ts": {
+   "size": 1329,
+   "mtime": 1791642755288,
+   "sha": "78a771e0a0d1a15b53c95bbc5ea9f90c9490a4dbde428a7e08e3e8c84020aaf4",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "78a771e0a0d1a15b53c95bbc5ea9f90c9490a4dbde428a7e08e3e8c84020aaf4",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/driving-trainer-protocol.ts": {
+   "size": 2241,
+   "mtime": 1791861010327,
+   "sha": "6cd2eb9f8288984b20363852159d5c53f57145e6fa05231b5025d9adef325535",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "6cd2eb9f8288984b20363852159d5c53f57145e6fa05231b5025d9adef325535",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/driving-trainer.ts": {
+   "size": 5532,
+   "mtime": 1791642029112,
+   "sha": "b1a2bef9b901875733dfac8af1d534137a0a76e8186ffb18fbfe507b497c8e2e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b1a2bef9b901875733dfac8af1d534137a0a76e8186ffb18fbfe507b497c8e2e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/fleet-trainer-protocol.ts": {
+   "size": 1122,
+   "mtime": 1791694497725,
+   "sha": "39782e6157c5ef19eae8c3b574341923194406ab292bcd94437b376c350c0bd0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "39782e6157c5ef19eae8c3b574341923194406ab292bcd94437b376c350c0bd0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/fleet-trainer.ts": {
+   "size": 4602,
+   "mtime": 1791694497735,
+   "sha": "b6602554ba16adf3568a66e5daef0ca07ba2f1a15947fe033db7f9d16ea07f2c",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "b6602554ba16adf3568a66e5daef0ca07ba2f1a15947fe033db7f9d16ea07f2c",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/subject2-trainer-protocol.test.ts": {
+   "size": 959,
+   "mtime": 1791802069321,
+   "sha": "3328bd809a71f29272c945d4cfcb0cca57c77c4648e44e754b7e42effe9db3c2",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3328bd809a71f29272c945d4cfcb0cca57c77c4648e44e754b7e42effe9db3c2",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/subject2-trainer-protocol.ts": {
+   "size": 1669,
+   "mtime": 1791802108805,
+   "sha": "6343aa2aac2f4bc2d2d5660ad01b15c7158f80cba3071f5b9dd24c80140d0703",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "6343aa2aac2f4bc2d2d5660ad01b15c7158f80cba3071f5b9dd24c80140d0703",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "src/workers/subject2-trainer.ts": {
+   "size": 4606,
+   "mtime": 1791802108808,
+   "sha": "8b20d3555f59de4cdb21ca782dfe27fa8a5b65ef15f3d34898f30e63e29d3f2e",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "8b20d3555f59de4cdb21ca782dfe27fa8a5b65ef15f3d34898f30e63e29d3f2e",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "tasks/plan.md": {
+   "size": 1505,
+   "mtime": 1791860697207,
+   "sha": "e807b1809cb6a70b334ec423436750e73b6b3f39910941e397aa101c4c608c8d",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "e807b1809cb6a70b334ec423436750e73b6b3f39910941e397aa101c4c608c8d",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "tasks/todo.md": {
+   "size": 843,
+   "mtime": 1791861872575,
+   "sha": "2d4fb328ec98b7b0a5d2773f8969c323df3d930aecbc9733995ce7aa0223c9de",
+   "tracked": true,
+   "class": "doc",
+   "lastReadHash": "2d4fb328ec98b7b0a5d2773f8969c323df3d930aecbc9733995ce7aa0223c9de",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "tsconfig.app.json": {
+   "size": 622,
+   "mtime": 1791509944449,
+   "sha": "cb356345e45c02eae7b133f8dbfff6c414e91aba81dba815c9c75f5e2935b10b",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "cb356345e45c02eae7b133f8dbfff6c414e91aba81dba815c9c75f5e2935b10b",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "tsconfig.json": {
+   "size": 120,
+   "mtime": 1791509903700,
+   "sha": "c3c1a5af0c9ed5727b295bd39076550c6a48a7a7d8a79eb29adc4e6c370830f0",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "c3c1a5af0c9ed5727b295bd39076550c6a48a7a7d8a79eb29adc4e6c370830f0",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "tsconfig.node.json": {
+   "size": 212,
+   "mtime": 1791509923590,
+   "sha": "771235bbe40f7914cc247a56ec4bf85e994120fcedb9a41253fab81491e251d9",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "771235bbe40f7914cc247a56ec4bf85e994120fcedb9a41253fab81491e251d9",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  },
+  "vite.config.ts": {
+   "size": 543,
+   "mtime": 1791859959560,
+   "sha": "3bfdccae7ac7eab302245a4e0520972cfc3aa07bde1b7fb84861f2267c53361c",
+   "tracked": true,
+   "class": "source",
+   "lastReadHash": "3bfdccae7ac7eab302245a4e0520972cfc3aa07bde1b7fb84861f2267c53361c",
+   "lastReadCommit": "72f5adb97867e2e8865fee341adf64934b8174bc",
+   "lastReadAt": "2026-10-13T15:36:24.726Z"
+  }
+ }
+}
