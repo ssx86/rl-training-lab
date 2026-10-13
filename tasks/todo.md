@@ -7,4 +7,4 @@
 - [x] GREEN: migrate DQN, TD3 fleet, and TD3 subject-2 runtimes; delete both old replay implementations.
 - [x] RED/GREEN: replace `AlgorithmLearningPanel` with a reusable prediction-to-transfer companion panel for all four experiments.
 - [x] Run import/dead-file audit; remove the superseded 2D driver view and its unused projection path.
-- [ ] Run full tests, lint, Pages-compatible build, publish, and browser-verify every route.
+- [x] Run full tests, lint, Pages-compatible build, publish, and browser-verify every route.
