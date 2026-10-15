@@ -38,6 +38,8 @@ export function useSubject2Lab() {
   const storedCheckpointRef = useRef<StoredSubject2Checkpoint | null>(initialCheckpoint);
   const [snapshot, setSnapshot] = useState<Subject2Snapshot | null>(null);
   const [mode, setModeState] = useState<Subject2Mode>("training");
+  const [trainingScope, setTrainingScope] = useState<Subject2TrainingScope>("rotation");
+  const [selectedProject, setSelectedProject] = useState<Subject2Project>("reverse-parking");
   const [speed, setSpeedState] = useState<Subject2TrainingSpeed>(1);
   const [status, setStatus] = useState<"idle" | "running" | "paused" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,8 @@ export function useSubject2Lab() {
       if (envelope.payload.type === "snapshot") {
         const next = envelope.payload.snapshot;
         setModeState(next.mode);
+        setTrainingScope(next.trainingScope);
+        setSelectedProject(next.selectedProject);
         const previous = latestRef.current;
         const shouldSnap = !previous || previous.episode !== next.episode || previous.scenario.id !== next.scenario.id;
         const duration = speedRef.current === 1 ? 100 : speedRef.current === 4 ? 25 : 0;
@@ -125,15 +129,17 @@ export function useSubject2Lab() {
     setError(null);
     if (!snapshot || status === "error") {
       historyRef.current = []; lastHistoryStepRef.current = -1; setRewardHistory([]);
-      workerRef.current?.postMessage({ type: "start", mode, speed, seed: 17 } satisfies Subject2Command);
+      workerRef.current?.postMessage({ type: "start", mode, speed, seed: 17, trainingScope, selectedProject } satisfies Subject2Command);
     }
     else workerRef.current?.postMessage({ type: "resume" } satisfies Subject2Command);
     setStatus("running");
-  }, [mode, snapshot, speed, status]);
+  }, [mode, selectedProject, snapshot, speed, status, trainingScope]);
   const pause = useCallback(() => { workerRef.current?.postMessage({ type: "pause" } satisfies Subject2Command); setStatus("paused"); }, []);
   const setMode = useCallback((next: Subject2Mode) => { setModeState(next); workerRef.current?.postMessage({ type: "set-mode", mode: next } satisfies Subject2Command); }, []);
   const setSpeed = useCallback((next: Subject2TrainingSpeed) => { speedRef.current = next; setSpeedState(next); workerRef.current?.postMessage({ type: "set-speed", speed: next } satisfies Subject2Command); }, []);
   const setTrainingSelection = useCallback((scope: Subject2TrainingScope, project: Subject2Project) => {
+    setTrainingScope(scope);
+    setSelectedProject(project);
     workerRef.current?.postMessage({ type: "set-training-selection", scope, project } satisfies Subject2Command);
   }, []);
 
@@ -155,7 +161,7 @@ export function useSubject2Lab() {
   const dismissRestorePrompt = useCallback(() => setRestorePromptOpen(false), []);
 
   return {
-    snapshot, rewardHistory, mode, speed, status, error, metrics, checkpointInfo, checkpointError, restorePromptOpen,
+    snapshot, rewardHistory, mode, trainingScope, selectedProject, speed, status, error, metrics, checkpointInfo, checkpointError, restorePromptOpen,
     setMode, setSpeed, setTrainingSelection, start, pause, saveCheckpoint, restoreCheckpoint, dismissRestorePrompt,
   };
 }

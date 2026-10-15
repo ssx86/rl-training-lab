@@ -24,6 +24,8 @@ describe("Subject2Lab attempt resets", () => {
       snapshot,
       rewardHistory: [],
       mode: "training",
+      trainingScope: "rotation",
+      selectedProject: "reverse-parking",
       speed: "max",
       status: "running",
       error: null,
@@ -56,7 +58,7 @@ describe("Subject2Lab attempt resets", () => {
     const setTrainingSelection = vi.fn();
     vi.mocked(useSubject2Lab).mockReturnValue({
       snapshot: { ...runtime.snapshot(), trainingScope: "single", selectedProject: "s-curve" },
-      rewardHistory: [], mode: "training", speed: "max", status: "paused", error: null,
+      rewardHistory: [], mode: "training", trainingScope: "single", selectedProject: "s-curve", speed: "max", status: "paused", error: null,
       metrics: { backend: "webgl", stepsPerSecond: 0 },
       checkpointInfo: { available: false, savedAt: null, step: 0, updates: 0, reason: null },
       checkpointError: null, restorePromptOpen: false,

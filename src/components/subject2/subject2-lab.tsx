@@ -36,8 +36,8 @@ export function Subject2Lab() {
   const steeringDegrees = SUBJECT2_VEHICLE.maxSteerRadians * 180 / Math.PI;
   const lateralClearanceCm = (SUBJECT2_STANDARD.reverseParking.bayWidth - SUBJECT2_VEHICLE.width) * 50;
   const longitudinalClearanceCm = (SUBJECT2_STANDARD.reverseParking.bayLength - SUBJECT2_VEHICLE.length) * 50;
-  const trainingScope = snapshot?.trainingScope ?? "rotation";
-  const selectedProject = snapshot?.selectedProject ?? SUBJECT2_PROJECT_ORDER[0];
+  const trainingScope = lab.trainingScope;
+  const selectedProject = lab.selectedProject;
 
   return (
     <div>

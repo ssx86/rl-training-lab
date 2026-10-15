@@ -15,7 +15,7 @@ export function shouldAutoCheckpoint(lastSavedStep: number, currentStep: number,
 }
 
 export type Subject2Command =
-  | { type: "start"; mode: Subject2Mode; speed: Subject2TrainingSpeed; seed: number; checkpoint?: Subject2RuntimeCheckpoint; run?: boolean }
+  | { type: "start"; mode: Subject2Mode; speed: Subject2TrainingSpeed; seed: number; trainingScope?: Subject2TrainingScope; selectedProject?: Subject2Project; checkpoint?: Subject2RuntimeCheckpoint; run?: boolean }
   | { type: "pause" }
   | { type: "resume" }
   | { type: "set-mode"; mode: Subject2Mode }

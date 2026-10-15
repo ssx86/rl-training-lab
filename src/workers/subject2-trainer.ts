@@ -60,6 +60,7 @@ async function start(command: Extract<Subject2Command, { type: "start" }>): Prom
   runtime?.dispose();
   runtime = new Subject2TrainingRuntime({ seed: command.seed });
   if (command.checkpoint) runtime.importCheckpoint(command.checkpoint);
+  else runtime.setTrainingSelection(command.trainingScope ?? "rotation", command.selectedProject ?? "reverse-parking");
   mode = command.checkpoint?.mode ?? command.mode;
   speed = command.speed;
   if (!command.checkpoint) runtime.setMode(mode);

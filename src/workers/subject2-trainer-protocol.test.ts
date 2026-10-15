@@ -23,4 +23,10 @@ describe("subject 2 trainer cadence", () => {
     const command = { type: "set-training-selection", scope: "single", project: "reverse-parking" } satisfies Subject2Command;
     expect(command).toEqual({ type: "set-training-selection", scope: "single", project: "reverse-parking" });
   });
+
+  it("can initialize a new runtime with a selection made before training starts", () => {
+    const command = { type: "start", mode: "training", speed: "max", seed: 17, trainingScope: "single", selectedProject: "s-curve" } satisfies Subject2Command;
+    expect(command.trainingScope).toBe("single");
+    expect(command.selectedProject).toBe("s-curve");
+  });
 });
