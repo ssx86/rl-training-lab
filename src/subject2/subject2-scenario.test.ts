@@ -120,11 +120,13 @@ describe("random subject 2 scenario generator", () => {
     expect(scenario.checkpoints).toHaveLength(1);
   });
 
-  it("models line crossing, first parking, opposite line crossing and final parking", () => {
+  it("starts reverse parking from a legal ready-to-reverse pose with one visible bay goal", () => {
     const scenario = generateSubject2Scenario(31, "reverse-parking");
-    expect(scenario.checkpoints.map((item) => item.id)).toEqual(["right-control", "park-from-right", "left-control", "park-from-left"]);
-    expect(scenario.checkpoints.filter((item) => item.containmentBayId)).toHaveLength(2);
-    expect(scenario.checkpoints.filter((item) => item.motion === "reverse")).toHaveLength(2);
+    expect(scenario.checkpoints.map((item) => item.id)).toEqual(["parked"]);
+    expect(scenario.checkpoints[0]).toMatchObject({ containmentBayId: "bay", motion: "reverse" });
+    expect(scenario.start.heading).toBeCloseTo(0, 5);
+    expect(scenario.start.x).toBeGreaterThan(scenario.parkingBays[0].x);
+    expect(createSubject2Vehicle(scenario.start).speed).toBe(0);
     const bay = scenario.parkingBays[0];
     const distanceToLine = (id: string) => {
       const line = scenario.segments.find((item) => item.id === id)!;

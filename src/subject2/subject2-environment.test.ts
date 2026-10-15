@@ -16,59 +16,43 @@ const heldRampVehicle = (scenario: ReturnType<typeof generateSubject2Scenario>) 
 const holdAction = { steer: 0, throttle: 0, brake: .2, gear: 1 } as const;
 
 describe("random subject 2 environment", () => {
-  it("always exposes the final endpoint as the target instead of the current process gate", () => {
+  it("exposes the reverse-parking bay as its only target", () => {
     const scenario = generateSubject2Scenario(10, "reverse-parking");
     const environment = new Subject2Environment(scenario);
     const goal = scenario.checkpoints.at(-1)!;
     const observation = environment.observe();
     expect(observation.targetDistance).toBeCloseTo(Math.hypot(goal.x - scenario.start.x, goal.y - scenario.start.y), 5);
-    expect(environment.currentGoal().id).toBe("park-from-left");
-    expect(environment.currentCheckpoint().id).toBe("right-control");
+    expect(environment.currentGoal().id).toBe("parked");
+    expect(environment.currentCheckpoint().id).toBe("parked");
   });
 
-  it("rewards complete line crossings and accepts any fully contained reverse parking pose", () => {
+  it("accepts a fully contained reverse parking pose as the terminal goal", () => {
     const scenario = generateSubject2Scenario(10, "reverse-parking");
     const environment = new Subject2Environment(scenario);
-    const right = scenario.segments.find((item) => item.id === "right-control-line")!;
-    environment.setVehicleForTest(createSubject2Vehicle({ x: right.ax + 2.5, y: 36.05, heading: 0, speed: .1 }));
-    let result = environment.step({ steer: 0, throttle: 0 });
+    const bay = scenario.parkingBays[0];
+    environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x + .1, y: bay.y + .2, heading: bay.heading, speed: -.1 }));
+    const result = environment.step({ steer: 0, throttle: 0, gear: -1 });
     expect(result.checkpointReached).toBe(true);
     expect(Number.isFinite(result.rewardBreakdown.poseProgress)).toBe(true);
     expect(result.rewardBreakdown.checkpoint).toBeGreaterThan(0);
-    expect(result.done).toBe(false);
-
-    const bay = scenario.parkingBays[0];
-    environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x + .1, y: bay.y + .2, heading: bay.heading, speed: -.1 }));
-    result = environment.step({ steer: 0, throttle: 0 });
-    expect(result.checkpointReached).toBe(true);
-    expect(Number.isFinite(result.rewardBreakdown.poseProgress)).toBe(true);
-    expect(result.done).toBe(false);
-
-    const left = scenario.segments.find((item) => item.id === "left-control-line")!;
-    environment.setVehicleForTest(createSubject2Vehicle({ x: left.ax - 2.5, y: 36.05, heading: Math.PI, speed: .1 }));
-    result = environment.step({ steer: 0, throttle: 0 });
-    expect(result.checkpointReached).toBe(true);
-    expect(result.done).toBe(false);
-
-    environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x - .1, y: bay.y - .2, heading: bay.heading, speed: -.1 }));
-    result = environment.step({ steer: 0, throttle: 0 });
-    expect(result.checkpointReached).toBe(true);
     expect(result.passed).toBe(true);
     expect(result.done).toBe(true);
   });
 
-  it("scores a reverse-parking control gate when both front wheels cross, without requiring the rear body to cross", () => {
+  it("rewards increasing body overlap before reverse parking is complete", () => {
     const scenario = generateSubject2Scenario(10, "reverse-parking");
     const environment = new Subject2Environment(scenario);
-    const right = scenario.segments.find((item) => item.id === "right-control-line")!;
+    const bay = scenario.parkingBays[0];
     environment.setVehicleForTest(createSubject2Vehicle({
-      x: right.ax - SUBJECT2_VEHICLE.wheelBase / 2 + .12,
-      y: 36.05,
-      heading: 0,
-      speed: .1,
+      x: bay.x,
+      y: bay.y + bay.length / 2 + SUBJECT2_VEHICLE.length / 2 - .6,
+      heading: bay.heading,
+      speed: -.5,
+      gear: -1,
     }));
-    const result = environment.step({ steer: 0, throttle: 0 });
-    expect(result.checkpointReached).toBe(true);
+    const result = environment.step({ steer: 0, throttle: .4, brake: 0, gear: -1 });
+    expect(result.checkpointReached).toBe(false);
+    expect(result.rewardBreakdown.bayOverlapProgress).toBeGreaterThan(0);
   });
   it("reduces pose error as the complete vehicle approaches the local target", () => {
     const target = generateSubject2Scenario(10, "right-angle").checkpoints[0];
@@ -107,9 +91,9 @@ describe("random subject 2 environment", () => {
     expect(result.rewardBreakdown.stalled).toBe(-35);
   });
 
-  it("rewards progress toward the visible current process condition before the final checkpoint", () => {
+  it("rewards reverse progress toward the visible parking goal", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
-    const result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: 1 });
+    const result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: -1 });
     expect(result.checkpointIndex).toBe(0);
     expect(result.rewardBreakdown.poseProgress).toBeGreaterThan(0);
   });

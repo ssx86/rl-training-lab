@@ -95,3 +95,60 @@ export function isVehicleFullyInsideBay(vehicle: Subject2VehicleState, bay: Subj
     return Math.abs(localX) <= halfLength + 1e-7 && Math.abs(localY) <= halfWidth + 1e-7;
   });
 }
+
+function clipPolygon(
+  polygon: readonly Point[],
+  inside: (point: Point) => boolean,
+  intersection: (start: Point, end: Point) => Point,
+): Point[] {
+  const output: Point[] = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const start = polygon[index];
+    const end = polygon[(index + 1) % polygon.length];
+    const startInside = inside(start);
+    const endInside = inside(end);
+    if (startInside && endInside) output.push(end);
+    else if (startInside && !endInside) output.push(intersection(start, end));
+    else if (!startInside && endInside) output.push(intersection(start, end), end);
+  }
+  return output;
+}
+
+function polygonArea(points: readonly Point[]): number {
+  if (points.length < 3) return 0;
+  return Math.abs(points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0)) / 2;
+}
+
+/** Exact fraction of the oriented vehicle body currently inside the bay. */
+export function vehicleBayOverlapRatio(vehicle: Subject2VehicleState, bay: Subject2ParkingBay): number {
+  const cos = Math.cos(-bay.heading);
+  const sin = Math.sin(-bay.heading);
+  let polygon = subject2VehicleCorners(vehicle).map((corner) => {
+    const dx = corner.x - bay.x;
+    const dy = corner.y - bay.y;
+    return { x: dx * cos - dy * sin, y: dx * sin + dy * cos };
+  });
+  const boundaries = [
+    { axis: "x" as const, limit: -bay.length / 2, keepGreater: true },
+    { axis: "x" as const, limit: bay.length / 2, keepGreater: false },
+    { axis: "y" as const, limit: -bay.width / 2, keepGreater: true },
+    { axis: "y" as const, limit: bay.width / 2, keepGreater: false },
+  ];
+  for (const boundary of boundaries) {
+    const coordinate = (point: Point) => point[boundary.axis];
+    polygon = clipPolygon(
+      polygon,
+      (point) => boundary.keepGreater ? coordinate(point) >= boundary.limit : coordinate(point) <= boundary.limit,
+      (start, end) => {
+        const delta = coordinate(end) - coordinate(start);
+        const t = Math.abs(delta) < 1e-12 ? 0 : (boundary.limit - coordinate(start)) / delta;
+        return { x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t };
+      },
+    );
+    if (polygon.length === 0) return 0;
+  }
+  return Math.max(0, Math.min(1, polygonArea(polygon) / (SUBJECT2_VEHICLE.length * SUBJECT2_VEHICLE.width)));
+}

@@ -80,13 +80,10 @@ function reverseParking(): Draft {
     seg("left-control-line", leftControlX, bayFrontY, leftControlX, laneBottomY, "exam-line"), seg("right-control-line", rightControlX, bayFrontY, rightControlX, laneBottomY, "exam-line"),
   ];
   return {
-    start: { x: 37, y: stagingY, heading: 0 },
+    start: { x: rightControlX, y: stagingY, heading: 0 },
     parkingBays: [{ id: "bay", label: "倒车库", x: bayCenterX, y: (bayFrontY + bayBackY) / 2, width: standard.bayWidth, length: standard.bayLength, heading: Math.PI / 2 }],
     checkpoints: [
-      cp("right-control", "reverse-parking", "右侧起倒位置", rightControlX, stagingY, 0, "forward", "驶过车库，在距库边 6.7m 的右控制线内摆正车身", { positionTolerance: .65 }),
-      cp("park-from-right", "reverse-parking", "右侧倒入车库", bayCenterX, (bayFrontY + bayBackY) / 2, Math.PI / 2, "reverse", "从右侧倒入车库，四个车角必须全部在线内", { positionTolerance: .38, headingTolerance: .06, speedMax: .35, reward: 48, containmentBayId: "bay" }),
-      cp("left-control", "reverse-parking", "左侧起倒位置", leftControlX, stagingY, Math.PI, "forward", "向左驶出车库，在距库边 6.7m 的左控制线内摆正车身", { positionTolerance: .65, reward: 28 }),
-      cp("park-from-left", "reverse-parking", "左侧倒入车库", bayCenterX, (bayFrontY + bayBackY) / 2, Math.PI / 2, "reverse", "从左侧再次倒入车库，四个车角必须全部在线内", { positionTolerance: .38, headingTolerance: .06, speedMax: .35, reward: 48, containmentBayId: "bay" }),
+      cp("parked", "reverse-parking", "完整倒入车库", bayCenterX, (bayFrontY + bayBackY) / 2, Math.PI / 2, "reverse", "从起倒位置自主倒入车库；距离、姿态和车身入库比例会连续评分，四个车角全部在线内才通过", { positionTolerance: .38, headingTolerance: .06, speedMax: .35, reward: 58, containmentBayId: "bay" }),
     ],
     segments: lines,
     roadSurfaces: [{ id: "approach-road", kind: "asphalt", points: rectangle(34, bayFrontY, 66, laneBottomY) }, { id: "bay-surface", kind: "parking", points: rectangle(bayLeftX, bayBackY, bayRightX, bayFrontY) }],

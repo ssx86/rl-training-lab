@@ -8,6 +8,7 @@ export interface RewardPoseError {
 
 export interface Subject2RewardBreakdown {
   readonly poseProgress: number;
+  readonly bayOverlapProgress: number;
   readonly checkpoint: number;
   readonly passBonus: number;
   readonly timeCost: number;
@@ -38,6 +39,8 @@ export interface Subject2RewardContext {
   readonly checkpointReached: boolean;
   readonly isFinalCheckpoint: boolean;
   readonly shapePoseProgress?: boolean;
+  readonly previousBayOverlap?: number;
+  readonly nextBayOverlap?: number;
   readonly collided: boolean;
   readonly outOfBounds?: boolean;
   readonly rollbackExceeded?: boolean;
@@ -59,6 +62,7 @@ export function calculateSubject2Reward(context: Subject2RewardContext): Subject
   const speedLimit = context.target.speedMax ?? .8;
   const poseProgress = context.shapePoseProgress === false ? 0 : clamp(12 * (posePotential(context.nextError, speedLimit)
     - posePotential(context.previousError, speedLimit)), -4, 4);
+  const bayOverlapProgress = clamp(30 * ((context.nextBayOverlap ?? 0) - (context.previousBayOverlap ?? 0)), -8, 8);
   const wrongWay = (context.target.motion === "forward" && context.speed < -.05)
     || (context.target.motion === "reverse" && context.speed > .05);
   const safeSpeed = speedLimit + Math.min(2.2, context.nextError.distance * .28);
@@ -66,6 +70,7 @@ export function calculateSubject2Reward(context: Subject2RewardContext): Subject
   const clearanceDeficit = Math.max(0, .6 - context.minimumClearance);
   const parts = {
     poseProgress,
+    bayOverlapProgress,
     checkpoint: context.checkpointReached ? context.target.reward : 0,
     passBonus: context.checkpointReached && context.isFinalCheckpoint ? 100 : 0,
     timeCost: -.005,

@@ -18,6 +18,8 @@ const base = {
   validHoldStep: false,
   startTimedOut: false,
   stalled: false,
+  previousBayOverlap: 0,
+  nextBayOverlap: 0,
 };
 
 describe("subject 2 explainable reward", () => {
@@ -34,6 +36,15 @@ describe("subject 2 explainable reward", () => {
     expect(centered.clearance).toBe(0);
     expect(reward.wrongDirection).toBeLessThan(0);
     expect(reward.clearance).toBeLessThan(0);
+  });
+
+  it("rewards only incremental bay overlap instead of paying for standing still in the bay", () => {
+    const entering = calculateSubject2Reward({ ...base, previousBayOverlap: .1, nextBayOverlap: .35 });
+    const stationary = calculateSubject2Reward({ ...base, previousBayOverlap: .35, nextBayOverlap: .35 });
+    const leaving = calculateSubject2Reward({ ...base, previousBayOverlap: .35, nextBayOverlap: .1 });
+    expect(entering.bayOverlapProgress).toBeGreaterThan(0);
+    expect(stationary.bayOverlapProgress).toBe(0);
+    expect(leaving.bayOverlapProgress).toBeLessThan(0);
   });
 
   it("penalizes abrupt automatic-brake changes as part of control smoothness", () => {

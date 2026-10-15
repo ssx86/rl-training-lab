@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collidesWithCourse, isVehicleFullyInsideBay } from "./subject2-collision";
+import { collidesWithCourse, isVehicleFullyInsideBay, vehicleBayOverlapRatio } from "./subject2-collision";
 import { SUBJECT2_STANDARD } from "./subject2-standard";
 import { createSubject2Vehicle, SUBJECT2_VEHICLE } from "./subject2-vehicle";
 
@@ -26,5 +26,14 @@ describe("subject 2 body collision", () => {
     const legalLateralOffset = (bay.width - SUBJECT2_VEHICLE.width) / 2 - .02;
     const vehicle = createSubject2Vehicle({ x: 10 + legalLateralOffset, y: 10, heading: Math.PI / 2 });
     expect(isVehicleFullyInsideBay(vehicle, bay)).toBe(true);
+  });
+
+  it("measures exact vehicle-body overlap with a rotated parking bay", () => {
+    const bay = { id: "bay", label: "倒车库", x: 10, y: 10, width: 3, length: 6, heading: Math.PI / 2 } as const;
+    expect(vehicleBayOverlapRatio(createSubject2Vehicle({ x: 10, y: 10, heading: Math.PI / 2 }), bay)).toBeCloseTo(1, 6);
+    expect(vehicleBayOverlapRatio(createSubject2Vehicle({ x: 10, y: 20, heading: Math.PI / 2 }), bay)).toBe(0);
+    const partial = vehicleBayOverlapRatio(createSubject2Vehicle({ x: 10, y: 13, heading: Math.PI / 2 }), bay);
+    expect(partial).toBeGreaterThan(0);
+    expect(partial).toBeLessThan(1);
   });
 });

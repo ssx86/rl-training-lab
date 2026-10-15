@@ -1,6 +1,6 @@
 import { distanceBetween, normalizeAngle } from "@/simulation/geometry";
 import { SUBJECT2_PROJECT_ORDER, type Subject2PoseCheckpoint, type Subject2Scenario } from "./subject2-course";
-import { collidesWithCourse, isVehicleFullyInsideBay, isVehicleWithinRoadSurfaces, subject2FrontBumperPoint, subject2FrontWheelContactPoints } from "./subject2-collision";
+import { collidesWithCourse, isVehicleFullyInsideBay, isVehicleWithinRoadSurfaces, subject2FrontBumperPoint, vehicleBayOverlapRatio } from "./subject2-collision";
 import { generateSubject2Scenario } from "./subject2-scenario";
 import { senseSubject2Course, SUBJECT2_SENSOR_RANGE, type Subject2Scan } from "./subject2-sensors";
 import { advanceSubject2Vehicle, createSubject2Vehicle, SUBJECT2_VEHICLE, type Subject2Action, type Subject2VehicleState } from "./subject2-vehicle";
@@ -55,17 +55,6 @@ function motionMatches(vehicle: Subject2VehicleState, target: Subject2PoseCheckp
   if (target.motion === "forward") return vehicle.speed > .05 || (Math.abs(vehicle.speed) <= .05 && lastMotion === 1);
   if (target.motion === "reverse") return vehicle.speed < -.05 || (Math.abs(vehicle.speed) <= .05 && lastMotion === -1);
   return Math.abs(vehicle.speed) <= target.speedMax;
-}
-
-function crossedReverseParkingControlLine(vehicle: Subject2VehicleState, target: Subject2PoseCheckpoint, scenario: Subject2Scenario): boolean | null {
-  const lineId = target.id === "right-control" ? "right-control-line" : target.id === "left-control" ? "left-control-line" : null;
-  if (scenario.project !== "reverse-parking" || !lineId) return null;
-  const line = scenario.segments.find((segment) => segment.id === lineId);
-  if (!line) return false;
-  const frontWheels = subject2FrontWheelContactPoints(vehicle);
-  return target.id === "right-control"
-    ? frontWheels.every((wheel) => wheel.x > line.ax)
-    : frontWheels.every((wheel) => wheel.x < line.ax);
 }
 
 function rampStopGeometry(vehicle: Subject2VehicleState, scenario: Subject2Scenario): { inBand: boolean; stopLineDistance: number } {
@@ -129,6 +118,8 @@ export class Subject2Environment {
     const isFinalCheckpoint = this.checkpointIndex === this.scenario.checkpoints.length - 1;
     const rewardTarget = processTarget;
     const previousError = checkpointPoseError(this.vehicle, rewardTarget);
+    const targetBay = processTarget.containmentBayId ? this.scenario.parkingBays.find((item) => item.id === processTarget.containmentBayId) : undefined;
+    const previousBayOverlap = targetBay ? vehicleBayOverlapRatio(this.vehicle, targetBay) : 0;
     const previousSteer = this.vehicle.steer;
     const previousThrottle = this.previousThrottle;
     const previousBrake = this.vehicle.brake;
@@ -141,19 +132,19 @@ export class Subject2Environment {
     else if (this.vehicle.speed < -.05) this.lastMotion = -1;
     this.stepCount += 1;
     const nextError = checkpointPoseError(this.vehicle, rewardTarget);
+    const nextBayOverlap = targetBay ? vehicleBayOverlapRatio(this.vehicle, targetBay) : 0;
     const processError = checkpointPoseError(this.vehicle, processTarget);
     if (processError.total < this.bestProcessError - SUBJECT2_STANDARD.training.minimumProgressDelta) {
       this.bestProcessError = processError.total;
       this.lastProgressStep = this.stepCount;
     }
-    const bay = processTarget.containmentBayId ? this.scenario.parkingBays.find((item) => item.id === processTarget.containmentBayId) : undefined;
+    const bay = targetBay;
     const poseReached = processError.distance <= processTarget.positionTolerance && processError.heading <= processTarget.headingTolerance && processError.speed <= processTarget.speedMax && motionMatches(this.vehicle, processTarget, this.lastMotion);
     const collided = collidesWithCourse(this.vehicle, this.scenario.segments);
     // A pose never counts when any part of the body touches a scored line.
-    const crossedLine = crossedReverseParkingControlLine(this.vehicle, processTarget, this.scenario);
-    const genericProcessReached = crossedLine ?? (bay
+    const genericProcessReached = bay
       ? isVehicleFullyInsideBay(this.vehicle, bay) && motionMatches(this.vehicle, processTarget, this.lastMotion)
-      : poseReached);
+      : poseReached;
     const stopGeometry = rampStopGeometry(this.vehicle, this.scenario);
     const validHoldStep = isRampStop && stopGeometry.inBand
       && processError.heading <= processTarget.headingTolerance
@@ -197,6 +188,7 @@ export class Subject2Environment {
       throttleChange: this.vehicle.throttle - previousThrottle,
       brakeChange: this.vehicle.brake - previousBrake,
       minimumClearance, checkpointReached, isFinalCheckpoint, shapePoseProgress: true,
+      previousBayOverlap, nextBayOverlap,
       collided, outOfBounds, rollbackExceeded, requiredHold: stationaryAllowed,
       validHoldStep, startTimedOut, stalled, timedOut,
     });
