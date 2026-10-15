@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.3.0 — 2026-10-15
+
+### Added
+
+- Added five-subject rotation and single-subject training scopes. Both use the
+  same TD3 model and replay memory, and can be switched without recording a
+  failed attempt or clearing learned state.
+- Added exact oriented vehicle/bay intersection measurement and an incremental
+  body-overlap reward that cannot be farmed by standing still.
+
+### Changed
+
+- Simplified reverse parking to one visible final bay goal and a stationary,
+  path-verified ready-to-reverse start. Distance, heading, and body overlap now
+  provide continuous feedback before legal full containment ends the attempt.
+- Updated the training controls, reward chart, live reward ledger, and theory
+  explanation to expose the active curriculum and its actual scoring terms.
+
+### Verification
+
+- 225 automated tests across 52 files, including geometry, reward, runtime,
+  worker protocol, checkpoint compatibility, and React interaction coverage.
+- ESLint, TypeScript, GitHub Pages production build, dependency audit, and a
+  real-browser smoke test of pre-start selection and focused training.
+
 ## 1.2.0 — 2026-10-15
 
 ### Fixed
