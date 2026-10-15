@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { nextSubject2ExplorationNoise, sampleSubject2WarmupAction, Subject2TrainingRuntime, shouldAdvanceTrainingProject, shouldUseProjectWarmup } from "./subject2-runtime";
+import { nextSubject2ExplorationNoise, Subject2TrainingRuntime, shouldAdvanceTrainingProject, shouldUseProjectWarmup } from "./subject2-runtime";
+import type { Subject2Action } from "./subject2-vehicle";
 
 describe("random-scene single-car TD3 runtime", () => {
   const runtimes: Subject2TrainingRuntime[] = [];
@@ -17,22 +18,33 @@ describe("random-scene single-car TD3 runtime", () => {
     expect(second.action.throttle * second.action.brake!).toBe(0);
   });
 
-  it("uses a motion-aware warmup action and refreshes it after 400 simulated milliseconds", async () => {
+  it("keeps one coverage option coherent for its full physical transition", async () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 31 }); runtimes.push(runtime);
     const first = await runtime.step();
-    for (let index = 1; index < 4; index += 1) {
+    const remaining = first.explorationOptionStepsRemaining;
+    expect(first.explorationOption).not.toBe(null);
+    expect(remaining).toBeGreaterThanOrEqual(5);
+    expect(Object.values(runtime.exportCheckpoint().explorationOptionCounts ?? {}).reduce((sum, count) => sum + count, 0)).toBe(1);
+    for (let index = 0; index < remaining; index += 1) {
       expect((await runtime.step()).action).toEqual(first.action);
     }
-    expect((await runtime.step()).action).not.toEqual(first.action);
+    await runtime.step();
+    expect(Object.values(runtime.exportCheckpoint().explorationOptionCounts ?? {}).reduce((sum, count) => sum + count, 0)).toBe(2);
     expect(first.action.throttle * first.action.brake!).toBe(0);
   });
 
-  it("biases warmup samples toward useful motion in the required gear", () => {
-    let state = 7;
-    const random = () => ((state = (state * 48271) % 2147483647) / 2147483647);
-    const actions = Array.from({ length: 500 }, () => sampleSubject2WarmupAction(random, -1));
-    expect(actions.filter((action) => action.gear! < -.25 && action.throttle > 0).length).toBeGreaterThan(300);
-    expect(actions.every((action) => action.throttle * action.brake! === 0)).toBe(true);
+  it("covers sustained drive and sustained braking instead of relying on isolated random pedal samples", async () => {
+    const runtime = new Subject2TrainingRuntime({ warmupSteps: 1_000, seed: 32 }); runtimes.push(runtime);
+    const actions: Subject2Action[] = [];
+    for (let step = 0; step < 120; step += 1) actions.push((await runtime.step()).action);
+    const longestRun = (matches: (action: (typeof actions)[number]) => boolean) => actions.reduce(
+      (state, action) => matches(action)
+        ? { current: state.current + 1, maximum: Math.max(state.maximum, state.current + 1) }
+        : { current: 0, maximum: state.maximum },
+      { current: 0, maximum: 0 },
+    ).maximum;
+    expect(longestRun((action) => action.throttle >= .65)).toBeGreaterThanOrEqual(8);
+    expect(longestRun((action) => (action.brake ?? 0) >= .9)).toBeGreaterThanOrEqual(8);
   });
 
   it("uses correlated exploration so a small opposite innovation does not flip the pedal axis", () => {
@@ -158,6 +170,7 @@ describe("random-scene single-car TD3 runtime", () => {
     const checkpoint = source.exportCheckpoint();
     expect(checkpoint.version).toBe(2);
     expect(checkpoint.trainingScope).toBe("rotation");
+    expect(Object.values(checkpoint.explorationOptionCounts ?? {}).reduce((sum, count) => sum + count, 0)).toBeGreaterThan(0);
     const restored = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 27 }); runtimes.push(restored);
 
     restored.importCheckpoint(checkpoint);
@@ -170,6 +183,7 @@ describe("random-scene single-car TD3 runtime", () => {
     });
     expect(restored.exportCheckpoint().agent.networks[0][0].values)
       .toEqual(checkpoint.agent.networks[0][0].values);
+    expect(restored.exportCheckpoint().explorationOptionCounts).toEqual(checkpoint.explorationOptionCounts);
   });
 
   it("rejects invalid training selection metadata at the checkpoint boundary", () => {

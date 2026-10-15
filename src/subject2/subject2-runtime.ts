@@ -4,7 +4,8 @@ import { describeTd3Config, type Td3Description } from "@/rl/continuous/td3-conf
 import { SUBJECT2_PROJECT_ORDER, type Subject2PoseCheckpoint, type Subject2Project, type Subject2Scenario } from "./subject2-course";
 import { Subject2Environment, SUBJECT2_OBSERVATION_SIZE, type Subject2Observation, type Subject2RewardBreakdown, type Subject2TerminalReason } from "./subject2-environment";
 import { createSeededRandom, evaluationScenarioSeed, generateSubject2Scenario, trainingScenarioSeed } from "./subject2-scenario";
-import { SUBJECT2_ACTION_CODEC, SUBJECT2_ACTION_SIZE, SUBJECT2_VEHICLE, type Subject2Action, type Subject2VehicleState } from "./subject2-vehicle";
+import { chooseSubject2ExplorationOption, explorationCoverageKey, planSubject2ExplorationOption, subject2ExplorationOptionProbability, type Subject2ExplorationOption } from "./subject2-exploration";
+import { SUBJECT2_ACTION_CODEC, SUBJECT2_ACTION_SIZE, type Subject2Action, type Subject2VehicleState } from "./subject2-vehicle";
 
 export type Subject2Mode = "training" | "evaluation";
 export type Subject2TrainingScope = "rotation" | "single";
@@ -32,6 +33,7 @@ export interface Subject2RuntimeCheckpoint {
   readonly trainingStats: Subject2StatsByProject;
   readonly evaluationStats: Subject2StatsByProject;
   readonly terminationCounts: Subject2TerminationCounts;
+  readonly explorationOptionCounts?: Readonly<Record<string, number>>;
   readonly agent: Td3AgentState;
 }
 
@@ -68,12 +70,13 @@ export interface Subject2Snapshot {
   readonly criticLoss: number | null;
   readonly actorLoss: number | null;
   readonly explorationNoise: number;
+  readonly explorationOption: Subject2ExplorationOption["kind"] | null;
+  readonly explorationOptionStepsRemaining: number;
   readonly modelInfo: Td3Description;
   readonly inferenceMs: number;
 }
 
 function noiseAt(step: number): number { const progress = Math.min(1, step / 120_000); return .32 + (.04 - .32) * progress; }
-const WARMUP_ACTION_HOLD_STEPS = Math.round(.4 / SUBJECT2_VEHICLE.timeStep);
 
 function gaussian(random: () => number): number {
   const first = Math.max(Number.EPSILON, random());
@@ -89,17 +92,6 @@ export function nextSubject2ExplorationNoise(
   return previous.map((value, index) => correlation * value + innovationScale * (innovation[index] ?? 0));
 }
 
-export function sampleSubject2WarmupAction(random: () => number, requiredMotion: -1 | 0 | 1): Subject2Action {
-  const intendedGear = requiredMotion === -1 ? -1 : 1;
-  const branch = random();
-  const broadTurn = random() < .2;
-  const steer = broadTurn ? (random() * 2 - 1) * .7 : (random() + random() - 1) * .22;
-  const strength = .35 + random() * .5;
-  if (branch < .75) return { steer, throttle: strength, brake: 0, gear: intendedGear };
-  if (branch < .85) return { steer, throttle: 0, brake: .35 + random() * .45, gear: intendedGear };
-  if (branch < .95) return { steer, throttle: .1, brake: 0, gear: intendedGear };
-  return { steer, throttle: strength, brake: 0, gear: -intendedGear };
-}
 const EMPTY_REWARD: Subject2RewardBreakdown = { poseProgress: 0, bayOverlapProgress: 0, checkpoint: 0, passBonus: 0, timeCost: 0, inactivity: 0, wrongDirection: 0, unsafeSpeed: 0, controlSmoothness: 0, clearance: 0, collision: 0, outOfBounds: 0, rollback: 0, stableHold: 0, startTimeout: 0, stalled: 0, timeout: 0, total: 0 };
 const emptyStats = (): Subject2StatsByProject => Object.fromEntries(SUBJECT2_PROJECT_ORDER.map((project) => [project, { attempts: 0, passes: 0, passRate: 0, processCompletionRate: 0 }])) as unknown as Subject2StatsByProject;
 const emptyTerminationCounts = (): Subject2TerminationCounts => ({ passed: 0, collision: 0, "out-of-bounds": 0, rollback: 0, "start-timeout": 0, stalled: 0, timeout: 0 });
@@ -145,8 +137,9 @@ export class Subject2TrainingRuntime {
   private lastRewardBreakdown = EMPTY_REWARD;
   private lastCheckpointReached = false;
   private lastTerminalReason: Subject2TerminalReason = null;
-  private warmupAction: Subject2Action | null = null;
-  private warmupActionStepsRemaining = 0;
+  private explorationOption: Subject2ExplorationOption | null = null;
+  private explorationOptionStepsRemaining = 0;
+  private explorationOptionCounts: Record<string, number> = {};
   private explorationState = Array(SUBJECT2_ACTION_SIZE).fill(0) as number[];
   private inferenceMs = 0;
   private readonly modelInfo: Td3Description;
@@ -206,8 +199,8 @@ export class Subject2TrainingRuntime {
     this.sceneChangedAtStep = this.stepCount;
     this.episode += 1;
     this.episodeReward = 0;
-    this.warmupAction = null;
-    this.warmupActionStepsRemaining = 0;
+    this.explorationOption = null;
+    this.explorationOptionStepsRemaining = 0;
     this.explorationState.fill(0);
     const project = this.mode === "training" ? this.activeTrainingProject() : undefined;
     this.environment.reset(generateSubject2Scenario(this.nextSeed(), project));
@@ -216,14 +209,22 @@ export class Subject2TrainingRuntime {
   private selectAction(observation: Subject2Observation): Subject2Action {
     if (this.mode === "evaluation") return this.agent.selectAction(observation.vector, 0, this.random);
     const project = this.environment.currentScenario().project;
-    if (shouldUseProjectWarmup(this.replay.sizeFor(project), this.warmupSteps)) {
-      if (!this.warmupAction || this.warmupActionStepsRemaining <= 0) {
-        this.warmupAction = sampleSubject2WarmupAction(this.random, observation.targetMotion);
-        this.warmupActionStepsRemaining = WARMUP_ACTION_HOLD_STEPS;
-      }
-      this.warmupActionStepsRemaining -= 1;
-      return this.warmupAction;
+    if (this.explorationOption && this.explorationOptionStepsRemaining > 0) {
+      this.explorationOptionStepsRemaining -= 1;
+      return this.explorationOption.action;
     }
+    const vehicle = this.environment.snapshot();
+    const projectWarmup = shouldUseProjectWarmup(this.replay.sizeFor(project), this.warmupSteps);
+    const policyOptionProbability = subject2ExplorationOptionProbability(this.stepCount, vehicle);
+    if (projectWarmup || this.random() < policyOptionProbability) {
+      const kind = chooseSubject2ExplorationOption(this.explorationOptionCounts, project, vehicle, this.random);
+      const key = explorationCoverageKey(project, vehicle, kind);
+      this.explorationOptionCounts[key] = (this.explorationOptionCounts[key] ?? 0) + 1;
+      this.explorationOption = planSubject2ExplorationOption(kind, vehicle, observation.targetMotion, this.random);
+      this.explorationOptionStepsRemaining = this.explorationOption.durationSteps - 1;
+      return this.explorationOption.action;
+    }
+    this.explorationOption = null;
     const policyAction = this.agent.selectAction(observation.vector, 0, this.random);
     const sigma = noiseAt(this.stepCount);
     const innovation = Array.from({ length: SUBJECT2_ACTION_SIZE }, () => gaussian(this.random) * sigma);
@@ -260,6 +261,7 @@ export class Subject2TrainingRuntime {
       trainingStats: structuredClone(this.trainingStats),
       evaluationStats: structuredClone(this.evaluationStats),
       terminationCounts: structuredClone(this.terminationCounts),
+      explorationOptionCounts: structuredClone(this.explorationOptionCounts),
       agent: this.agent.exportState(),
     };
   }
@@ -272,6 +274,10 @@ export class Subject2TrainingRuntime {
     const selectedProject = checkpoint.selectedProject ?? SUBJECT2_PROJECT_ORDER[checkpoint.trainingProjectIndex];
     if ((trainingScope !== "rotation" && trainingScope !== "single") || !SUBJECT2_PROJECT_ORDER.includes(selectedProject)) {
       throw new RangeError("科目二模型存档的训练范围不兼容。");
+    }
+    const explorationOptionCounts = checkpoint.explorationOptionCounts ?? {};
+    if (Object.values(explorationOptionCounts).some((count) => !Number.isFinite(count) || count < 0)) {
+      throw new RangeError("科目二模型存档的探索覆盖计数无效。");
     }
     this.agent.importState(checkpoint.agent);
     this.mode = checkpoint.mode;
@@ -291,6 +297,7 @@ export class Subject2TrainingRuntime {
     Object.assign(this.trainingStats, structuredClone(checkpoint.trainingStats));
     Object.assign(this.evaluationStats, structuredClone(checkpoint.evaluationStats));
     this.terminationCounts = structuredClone(checkpoint.terminationCounts);
+    this.explorationOptionCounts = structuredClone(explorationOptionCounts);
     this.episodeReward = 0;
     this.lastAction = { steer: 0, throttle: 0, brake: 0, gear: 1 };
     this.lastReward = 0;
@@ -299,8 +306,8 @@ export class Subject2TrainingRuntime {
     this.lastTerminalReason = null;
     this.criticLoss = null;
     this.actorLoss = null;
-    this.warmupAction = null;
-    this.warmupActionStepsRemaining = 0;
+    this.explorationOption = null;
+    this.explorationOptionStepsRemaining = 0;
     this.explorationState.fill(0);
     const project = this.mode === "training" ? this.activeTrainingProject() : undefined;
     this.environment.reset(generateSubject2Scenario(this.nextSeed(), project));
@@ -372,6 +379,7 @@ export class Subject2TrainingRuntime {
       projectStats: structuredClone(this.mode === "training" ? this.trainingStats : this.evaluationStats), replaySize: this.replay.size,
       replayByProject: Object.fromEntries(SUBJECT2_PROJECT_ORDER.map((project) => [project, this.replay.sizeFor(project)])) as Record<Subject2Project, number>, updates: this.updates,
       criticLoss: this.criticLoss, actorLoss: this.actorLoss, explorationNoise: this.mode === "training" ? noiseAt(this.stepCount) : 0,
+      explorationOption: this.explorationOption?.kind ?? null, explorationOptionStepsRemaining: this.explorationOptionStepsRemaining,
       modelInfo: this.modelInfo, inferenceMs: this.inferenceMs,
     };
   }

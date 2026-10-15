@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Replaced isolated warm-up pedal samples with temporally extended drive,
+  brake, and coast options that last long enough to cross actuator lag and
+  produce real vehicle motion or a complete stop.
+- Added UCB coverage guidance across project and motion-state combinations.
+  Its optimism bonus selects training exploration only and never changes the
+  exam reward; evaluation remains deterministic and exploration-free.
+- Persisted exploration coverage in compatible version 2 checkpoints and
+  documented the mechanism in the TD3 learning panel.
+
+### Verification
+
+- 230 automated tests across 53 files, ESLint, TypeScript, and production build.
+- Real-browser training check observed sustained throttle, full braking,
+  released-pedal transitions, replay growth, and no console errors.
+
 ## 1.3.0 — 2026-10-15
 
 ### Added

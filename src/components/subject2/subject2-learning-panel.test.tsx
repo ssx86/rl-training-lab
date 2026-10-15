@@ -17,4 +17,11 @@ describe("Subject2LearningPanel diagnostics", () => {
     await userEvent.click(screen.getByRole("tab", { name: "奖励公式" }));
     expect(screen.getByText(/12 秒无进展/)).toBeInTheDocument();
   });
+
+  it("explains coverage-guided temporal options without presenting them as exam reward", async () => {
+    render(<Subject2LearningPanel snapshot={runtime.snapshot()} backend="webgl" history={[]} />);
+    await userEvent.click(screen.getByRole("tab", { name: "TD3 模型" }));
+    expect(screen.getAllByText(/UCB/)).toHaveLength(2);
+    expect(screen.getByText(/不加入考试奖励/)).toBeInTheDocument();
+  });
 });
