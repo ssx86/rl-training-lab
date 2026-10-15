@@ -11,6 +11,7 @@ import { generateSubject2Scenario } from "@/subject2/subject2-scenario";
 import { SUBJECT2_STANDARD } from "@/subject2/subject2-standard";
 import { minimumServiceBrakeForStaticHold, SUBJECT2_VEHICLE } from "@/subject2/subject2-vehicle";
 import type { Subject2TrainingSpeed } from "@/workers/subject2-trainer-protocol";
+import type { Subject2CompletedTerminalReason } from "@/subject2/subject2-runtime";
 import { Subject2CourseCanvas } from "./subject2-course-canvas";
 import { Subject2CheckpointPanel } from "./subject2-checkpoint-panel";
 import { Subject2DriverView3D } from "./subject2-driver-view-3d";
@@ -40,7 +41,7 @@ export function Subject2Lab() {
       <section className="border-b bg-card">
         <div className="mx-auto flex max-w-[1680px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div><h2 className="text-base font-semibold tracking-tight">中国科目二 · 固定标准训练场</h2><p className="mt-1 text-xs text-muted-foreground">一辆训练车 · 五项共用同一模型 · 每项尝试 100 次后轮换 · 连续控制</p></div>
-          <div className="flex flex-wrap items-center gap-2"><Badge className="bg-accent text-[#9a5505]"><Target size={14} />只显示最终目标</Badge><Badge className="font-mono text-muted-foreground">自动挡 · Actor 48→128→128→3</Badge></div>
+          <div className="flex flex-wrap items-center gap-2"><Badge className="bg-accent text-[#9a5505]"><Target size={14} />只显示最终目标</Badge><Badge className="font-mono text-muted-foreground">自动挡 · Actor 57→128→128→3</Badge></div>
         </div>
       </section>
 
@@ -91,6 +92,11 @@ export function Subject2Lab() {
               <div><div className="mb-2 flex items-center justify-between"><span className="text-xs font-medium">运行速度</span><span className="font-mono text-[10px] text-muted-foreground">1× 实时 · MAX 抽样</span></div><div className="grid grid-cols-4 gap-1.5">{([1, 4, 16, "max"] as Subject2TrainingSpeed[]).map((speed) => <Button key={speed} size="sm" variant={lab.speed === speed ? "default" : "secondary"} onClick={() => lab.setSpeed(speed)}>{typeof speed === "number" ? `${speed}×` : "MAX"}</Button>)}</div><p className="mt-2 text-[10px] leading-4 text-muted-foreground">1× 按真实 100ms 物理时钟观察；加速模式仍按同一动力学计算，MAX 只抽样显示训练轨迹。</p></div>
               <Button className="w-full" onClick={running ? lab.pause : lab.start}>{running ? <Pause size={16} /> : <Play size={16} />}{running ? "暂停并保留模型" : snapshot ? "继续" : lab.mode === "training" ? "开始训练" : "开始评估"}</Button>
               <div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border bg-border"><Metric label="Replay" value={snapshot?.replaySize.toLocaleString() ?? "0"} /><Metric label="网络更新" value={snapshot?.updates.toLocaleString() ?? "0"} /><Metric label="当前项目进度" value={`${snapshot?.projectAttempts ?? 0} / ${snapshot?.attemptsPerProject ?? 100}`} /><Metric label="当前项目通过" value={snapshot?.projectPasses.toLocaleString() ?? "0"} /><Metric label="完成过程条件" value={snapshot?.checkpointCompletions.toLocaleString() ?? "0"} /><Metric label="场地复位次数" value={snapshot?.sceneGeneration.toLocaleString() ?? "0"} /><Metric label="Critic loss" value={snapshot?.criticLoss?.toFixed(4) ?? "等待"} /><Metric label="评估通过 / 尝试" value={`${snapshot?.passes ?? 0} / ${snapshot?.evaluationAttempts ?? 0}`} /></div>
+              <section className="border p-3" aria-label="终止诊断">
+                <div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold">最近终止原因</span><span className="font-mono text-[10px] text-danger">{terminalReasonLabel(snapshot?.lastTerminalReason ?? null)}</span></div>
+                <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[10px] sm:grid-cols-3">{TERMINATION_REASONS.map((reason) => <div key={reason} className="flex justify-between gap-2 border-b pb-1"><span className="text-muted-foreground">{terminalReasonLabel(reason)}</span><span className="font-mono">{snapshot?.terminationCounts[reason] ?? 0} 次</span></div>)}</div>
+                <p className="mt-2 text-[9px] leading-4 text-muted-foreground">诊断会跨场地复位保留；无弹窗、无蒙板。驶出考试区、碰线会立即结束；仅连续 12 秒没有实质进展才判定无进展。</p>
+              </section>
               <Subject2CheckpointPanel info={lab.checkpointInfo} promptOpen={lab.restorePromptOpen} canSave={Boolean(snapshot)} error={lab.checkpointError} onSave={lab.saveCheckpoint} onRestore={lab.restoreCheckpoint} onDismissPrompt={lab.dismissRestorePrompt} />
             </CardContent></Card>
 
@@ -121,4 +127,16 @@ function standardDimension(project: keyof typeof SUBJECT2_PROJECT_LABELS): strin
 function gearLabel(gear: -1 | 0 | 1): string { return gear < 0 ? "R" : gear > 0 ? "1" : "N"; }
 function rampPhaseLabel(phase: "approach" | "braking" | "holding" | "launch" | null): string {
   return phase === "approach" ? "接近" : phase === "braking" ? "制动" : phase === "holding" ? "保持" : phase === "launch" ? "起步" : "—";
+}
+
+const TERMINATION_REASONS: readonly Subject2CompletedTerminalReason[] = ["passed", "collision", "out-of-bounds", "rollback", "start-timeout", "stalled", "timeout"];
+function terminalReasonLabel(reason: Subject2CompletedTerminalReason | null): string {
+  if (reason === "passed") return "考试通过";
+  if (reason === "collision") return "碰线 / 碰撞";
+  if (reason === "out-of-bounds") return "驶出考试区";
+  if (reason === "rollback") return "坡道后溜";
+  if (reason === "start-timeout") return "坡起超时";
+  if (reason === "stalled") return "12 秒无进展";
+  if (reason === "timeout") return "回合超时";
+  return "暂无";
 }

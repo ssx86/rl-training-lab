@@ -171,7 +171,7 @@ export const EXPERIMENTS: readonly ExperimentDefinition[] = [
     requiredSignals: ["scenario", "processStage", "rewardBreakdown", "pose", "controls", "terminationReason"],
     concepts: [
       { label: "任务", value: "五项固定考试循环", explanation: "同一 TD3 模型每项尝试 100 次后轮换。" },
-      { label: "状态", value: "48 维车辆与场地观测", explanation: "观测包含近场感知、姿态、速度、坡度和过程状态。" },
+      { label: "状态", value: "57 维车辆与场地观测", explanation: "观测包含近场感知、姿态、速度、坡度、5 类科目和 4 个公开流程阶段。" },
       { label: "动作", value: "转向 · 互斥踏板 · 挡位", explanation: "自动挡 Actor 输出连续控制，油门与制动互斥。" },
       { label: "奖励", value: "目标、过程、约束分账", explanation: "每个分项都能追溯到考试事件或连续物理量。" },
     ],

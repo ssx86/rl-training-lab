@@ -14,6 +14,7 @@ export interface Subject2HistoryPoint {
   readonly throttle: number;
   readonly brake: number;
   readonly stopped: boolean;
+  readonly completionRate: number;
 }
 
 export interface Subject2CheckpointInfo {
@@ -70,10 +71,14 @@ export function useSubject2Lab() {
           const penalties = reward.timeCost + reward.inactivity + reward.wrongDirection + reward.unsafeSpeed
             + reward.controlSmoothness + reward.clearance + reward.collision + reward.outOfBounds
             + reward.rollback + reward.startTimeout + reward.stalled + reward.timeout;
+          const completedAttempts = Object.values(next.projectStats).reduce((sum, stats) => sum + stats.attempts, 0);
+          const completionRate = completedAttempts === 0 ? 0 : Object.values(next.projectStats)
+            .reduce((sum, stats) => sum + stats.processCompletionRate * stats.attempts, 0) / completedAttempts * 100;
           historyRef.current = [...historyRef.current, {
             step: next.step, total: next.reward, progress: reward.poseProgress + reward.stableHold,
             task: reward.checkpoint + reward.passBonus, penalties,
             throttle: next.vehicle.throttle, brake: next.vehicle.brake, stopped: Math.abs(next.vehicle.speed) < .08,
+            completionRate,
           }].slice(-180);
           lastHistoryStepRef.current = next.step;
         }

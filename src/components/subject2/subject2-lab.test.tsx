@@ -16,7 +16,10 @@ afterAll(() => runtime.dispose());
 
 describe("Subject2Lab attempt resets", () => {
   it("keeps the training view unobstructed after repeated attempt resets", () => {
-    const snapshot = { ...runtime.snapshot(), sceneGeneration: 12 };
+    const snapshot = {
+      ...runtime.snapshot(), sceneGeneration: 12, lastTerminalReason: "collision" as const,
+      terminationCounts: { ...runtime.snapshot().terminationCounts, collision: 7, stalled: 3 },
+    };
     vi.mocked(useSubject2Lab).mockReturnValue({
       snapshot,
       rewardHistory: [],
@@ -43,5 +46,8 @@ describe("Subject2Lab attempt resets", () => {
     expect(screen.getByText("attempt #12 · fixed course")).toBeInTheDocument();
     expect(screen.queryByText("下一次尝试 · 标准场地复位")).not.toBeInTheDocument();
     expect(screen.queryByText("attempt reset")).not.toBeInTheDocument();
+    expect(screen.getAllByText("碰线 / 碰撞")).toHaveLength(2);
+    expect(screen.getByText("7 次")).toBeInTheDocument();
+    expect(screen.getByText("3 次")).toBeInTheDocument();
   });
 });

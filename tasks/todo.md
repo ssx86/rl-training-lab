@@ -6,6 +6,6 @@
 - [x] RED/GREEN: project and public stage are explicit model observations.
 - [x] RED/GREEN: balanced replay samples every populated project bucket.
 - [x] RED/GREEN: terminal-reason counters and normalized process completion persist in runtime/checkpoints.
-- [ ] RED/GREEN: persistent diagnostics and process-completion curve render without overlays.
+- [x] RED/GREEN: persistent diagnostics and process-completion curve render without overlays.
 - [ ] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
 
