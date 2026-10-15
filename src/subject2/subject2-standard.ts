@@ -4,7 +4,8 @@ import { SUBJECT2_VEHICLE } from "./subject2-vehicle";
 // Source: https://anche.cn/Uploads/20230814052814_254484.pdf#page=19
 export const SUBJECT2_STANDARD = {
   training: {
-    unintendedStopLimitSeconds: 2,
+    noProgressLimitSeconds: 12,
+    minimumProgressDelta: .05,
   },
   reverseParking: {
     bayLength: SUBJECT2_VEHICLE.length + .7,

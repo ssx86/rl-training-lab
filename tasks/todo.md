@@ -1,7 +1,7 @@
 # Tasks: Subject 2 convergence and termination repair
 
-- [ ] RED/GREEN: twelve-second no-progress watchdog replaces two-second stationary failure.
-- [ ] RED/GREEN: rebalance terminal, inactivity, clearance, and process rewards.
+- [x] RED/GREEN: twelve-second no-progress watchdog replaces two-second stationary failure.
+- [x] RED/GREEN: rebalance terminal, inactivity, clearance, and process rewards.
 - [ ] RED/GREEN: motion-aware warm-up exploration with shorter action holds.
 - [ ] RED/GREEN: project and public stage are explicit model observations.
 - [ ] RED/GREEN: balanced replay samples every populated project bucket.

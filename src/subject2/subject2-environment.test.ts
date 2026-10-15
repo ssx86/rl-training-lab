@@ -84,16 +84,27 @@ describe("random subject 2 environment", () => {
     expect(result.reward).toBeLessThan(0);
   });
 
-  it("ends an attempt after two seconds of unintended continuous stopping", () => {
+  it("does not restart after only two seconds of stationary exploration", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
     let result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
-    const stopLimitSteps = SUBJECT2_STANDARD.training.unintendedStopLimitSeconds / SUBJECT2_VEHICLE.timeStep;
-    for (let index = 1; index < stopLimitSteps && !result.done; index += 1) {
+    const oldStopLimitSteps = 2 / SUBJECT2_VEHICLE.timeStep;
+    for (let index = 1; index < oldStopLimitSteps; index += 1) {
+      result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
+    }
+    expect(result.done).toBe(false);
+    expect(result.terminalReason).toBe(null);
+  });
+
+  it("ends an attempt after twelve seconds without measurable process progress", () => {
+    const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
+    let result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
+    const noProgressLimitSteps = SUBJECT2_STANDARD.training.noProgressLimitSeconds / SUBJECT2_VEHICLE.timeStep;
+    for (let index = 1; index < noProgressLimitSteps && !result.done; index += 1) {
       result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
     }
     expect(result.done).toBe(true);
     expect(result.terminalReason).toBe("stalled");
-    expect(result.rewardBreakdown.stalled).toBe(-120);
+    expect(result.rewardBreakdown.stalled).toBe(-35);
   });
 
   it("rewards progress toward the visible current process condition before the final checkpoint", () => {
@@ -166,7 +177,7 @@ describe("random subject 2 environment", () => {
     expect(result.rewardBreakdown.startTimeout).toBe(-100);
   });
 
-  it("does not apply the generic two-second stall failure during the legal hill-start window", () => {
+  it("does not apply the generic no-progress failure during the legal hill-start window", () => {
     const scenario = generateSubject2Scenario(23, "ramp");
     const environment = new Subject2Environment(scenario, 10_000);
     environment.setVehicleForTest(heldRampVehicle(scenario));
@@ -174,7 +185,7 @@ describe("random subject 2 environment", () => {
     let result = environment.step(holdAction);
     for (let index = 1; index < requiredSteps; index += 1) result = environment.step(holdAction);
     expect(result.checkpointReached).toBe(true);
-    const genericLimitSteps = SUBJECT2_STANDARD.training.unintendedStopLimitSeconds / SUBJECT2_VEHICLE.timeStep;
+    const genericLimitSteps = SUBJECT2_STANDARD.training.noProgressLimitSeconds / SUBJECT2_VEHICLE.timeStep;
     for (let index = 0; index < genericLimitSteps + 2; index += 1) result = environment.step(holdAction);
     expect(result.done).toBe(false);
     expect(result.terminalReason).toBe(null);
@@ -219,7 +230,7 @@ describe("random subject 2 environment", () => {
     const result = environment.step({ steer: 0, throttle: 0 });
     expect(result.done).toBe(true);
     expect(result.terminalReason).toBe("timeout");
-    expect(result.rewardBreakdown.timeout).toBe(-50);
+    expect(result.rewardBreakdown.timeout).toBe(-30);
   });
 
   it("ends immediately with a penalty when the whole car leaves every legal road surface", () => {

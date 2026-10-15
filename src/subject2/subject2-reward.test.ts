@@ -28,8 +28,10 @@ describe("subject 2 explainable reward", () => {
     expect(reward.total).toBe(Object.entries(reward).filter(([key]) => key !== "total").reduce((sum, [, value]) => sum + value, 0));
   });
 
-  it("penalizes driving opposite to the required motion and unsafe clearance", () => {
-    const reward = calculateSubject2Reward({ ...base, speed: -1.2, minimumClearance: .7 });
+  it("penalizes driving opposite to the required motion and genuinely unsafe clearance", () => {
+    const centered = calculateSubject2Reward({ ...base, minimumClearance: .9 });
+    const reward = calculateSubject2Reward({ ...base, speed: -1.2, minimumClearance: .4 });
+    expect(centered.clearance).toBe(0);
     expect(reward.wrongDirection).toBeLessThan(0);
     expect(reward.clearance).toBeLessThan(0);
   });
@@ -45,11 +47,11 @@ describe("subject 2 explainable reward", () => {
     const idle = calculateSubject2Reward({ ...base, speed: 0, nextError: base.previousError });
     const collision = calculateSubject2Reward({ ...base, collided: true });
     const timeout = calculateSubject2Reward({ ...base, timedOut: true });
-    expect(passed.passBonus).toBe(80);
+    expect(passed.passBonus).toBe(100);
     expect(passed.total).toBeGreaterThan(100);
     expect(idle.total).toBeLessThan(0);
     expect(collision.total).toBeLessThan(-90);
-    expect(timeout.total).toBeLessThan(-45);
+    expect(timeout.total).toBeLessThan(-25);
   });
 
   it("replaces the ordinary inactivity penalty with a bounded reward during a valid required hold", () => {
@@ -66,10 +68,12 @@ describe("subject 2 explainable reward", () => {
     expect(reward.total).toBeLessThan(-90);
   });
 
-  it("makes unintended prolonged stopping worse than an immediate collision", () => {
+  it("makes no-progress recoverable but still decisively worse than one inactive step", () => {
     const stalled = calculateSubject2Reward({ ...base, speed: 0, stalled: true });
     const collision = calculateSubject2Reward({ ...base, collided: true });
-    expect(stalled.stalled).toBe(-120);
-    expect(stalled.total).toBeLessThan(collision.total);
+    const idle = calculateSubject2Reward({ ...base, speed: 0, stalled: false });
+    expect(stalled.stalled).toBe(-35);
+    expect(stalled.total).toBeGreaterThan(collision.total);
+    expect(stalled.total).toBeLessThan(idle.total - 30);
   });
 });

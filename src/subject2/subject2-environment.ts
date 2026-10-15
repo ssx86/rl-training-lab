@@ -93,7 +93,8 @@ export class Subject2Environment {
   private rampPhase: RampTrainingPhase;
   private rampHoldSteps = 0;
   private rampLaunchSteps = 0;
-  private unintendedStationarySteps = 0;
+  private bestProcessError: number;
+  private lastProgressStep = 0;
   private readonly maxSteps: number;
 
   constructor(scenario: Subject2Scenario = generateSubject2Scenario(17), maxSteps = 1_600) {
@@ -101,6 +102,7 @@ export class Subject2Environment {
     this.maxSteps = maxSteps;
     this.vehicle = createSubject2Vehicle(scenario.start);
     this.rampPhase = scenario.project === "ramp" ? "approach" : null;
+    this.bestProcessError = checkpointPoseError(this.vehicle, scenario.checkpoints[0]).total;
   }
 
   reset(scenario: Subject2Scenario = this.scenario): Subject2Observation {
@@ -114,7 +116,8 @@ export class Subject2Environment {
     this.rampPhase = scenario.project === "ramp" ? "approach" : null;
     this.rampHoldSteps = 0;
     this.rampLaunchSteps = 0;
-    this.unintendedStationarySteps = 0;
+    this.bestProcessError = checkpointPoseError(this.vehicle, this.currentCheckpoint()).total;
+    this.lastProgressStep = 0;
     return this.observe();
   }
 
@@ -137,6 +140,10 @@ export class Subject2Environment {
     this.stepCount += 1;
     const nextError = checkpointPoseError(this.vehicle, rewardTarget);
     const processError = checkpointPoseError(this.vehicle, processTarget);
+    if (processError.total < this.bestProcessError - SUBJECT2_STANDARD.training.minimumProgressDelta) {
+      this.bestProcessError = processError.total;
+      this.lastProgressStep = this.stepCount;
+    }
     const bay = processTarget.containmentBayId ? this.scenario.parkingBays.find((item) => item.id === processTarget.containmentBayId) : undefined;
     const poseReached = processError.distance <= processTarget.positionTolerance && processError.heading <= processTarget.headingTolerance && processError.speed <= processTarget.speedMax && motionMatches(this.vehicle, processTarget, this.lastMotion);
     const collided = collidesWithCourse(this.vehicle, this.scenario.segments);
@@ -176,11 +183,9 @@ export class Subject2Environment {
     const startTimedOut = !passed && !collided && !outOfBounds && !rollbackExceeded
       && this.rampPhase === "launch" && this.rampLaunchSteps >= launchLimitSteps;
     const stationaryAllowed = (isRampStop && stopGeometry.inBand) || this.rampPhase === "launch";
-    if (Math.abs(this.vehicle.speed) < .08 && !stationaryAllowed) this.unintendedStationarySteps += 1;
-    else this.unintendedStationarySteps = 0;
-    const unintendedStopLimitSteps = Math.round(SUBJECT2_STANDARD.training.unintendedStopLimitSeconds / SUBJECT2_VEHICLE.timeStep);
+    const noProgressLimitSteps = Math.round(SUBJECT2_STANDARD.training.noProgressLimitSeconds / SUBJECT2_VEHICLE.timeStep);
     const stalled = !passed && !collided && !outOfBounds && !rollbackExceeded && !startTimedOut
-      && this.unintendedStationarySteps >= unintendedStopLimitSteps;
+      && !stationaryAllowed && this.stepCount - this.lastProgressStep >= noProgressLimitSteps;
     const timedOut = this.stepCount >= this.maxSteps;
     const done = passed || collided || outOfBounds || rollbackExceeded || startTimedOut || stalled || timedOut;
     const minimumClearance = Math.min(...senseSubject2Course(this.vehicle, this.scenario.segments).beams.map((beam) => beam.distanceMeters));
@@ -200,6 +205,8 @@ export class Subject2Environment {
         this.rampLaunchSteps = 0;
       }
       this.checkpointIndex += 1;
+      this.bestProcessError = checkpointPoseError(this.vehicle, this.currentCheckpoint()).total;
+      this.lastProgressStep = this.stepCount;
     }
     const reward = rewardBreakdown.total;
     const terminalReason = passed ? "passed" : collided ? "collision" : outOfBounds ? "out-of-bounds" : rollbackExceeded ? "rollback" : startTimedOut ? "start-timeout" : stalled ? "stalled" : timedOut ? "timeout" : null;
@@ -246,5 +253,7 @@ export class Subject2Environment {
   setVehicleForTest(vehicle: Subject2VehicleState): void {
     this.vehicle = vehicle;
     this.lastMotion = vehicle.speed > .05 ? 1 : vehicle.speed < -.05 ? -1 : 0;
+    this.bestProcessError = checkpointPoseError(vehicle, this.currentCheckpoint()).total;
+    this.lastProgressStep = this.stepCount;
   }
 }
