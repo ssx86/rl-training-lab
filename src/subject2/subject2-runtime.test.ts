@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { nextSubject2ExplorationNoise, sampleSubject2WarmupAction, Subject2TrainingRuntime, shouldAdvanceTrainingProject } from "./subject2-runtime";
+import { nextSubject2ExplorationNoise, sampleSubject2WarmupAction, Subject2TrainingRuntime, shouldAdvanceTrainingProject, shouldUseProjectWarmup } from "./subject2-runtime";
 
 describe("random-scene single-car TD3 runtime", () => {
   const runtimes: Subject2TrainingRuntime[] = [];
@@ -65,6 +65,12 @@ describe("random-scene single-car TD3 runtime", () => {
   it("rotates after 100 attempts regardless of pass or failure", () => {
     expect(shouldAdvanceTrainingProject(99, 100)).toBe(false);
     expect(shouldAdvanceTrainingProject(100, 100)).toBe(true);
+  });
+
+  it("collects a warmup quota for each project rather than only the first project", () => {
+    expect(shouldUseProjectWarmup(499, 500)).toBe(true);
+    expect(shouldUseProjectWarmup(500, 500)).toBe(false);
+    expect(shouldUseProjectWarmup(0, 500)).toBe(true);
   });
 
   it("trains all five projects in catalogue order while retaining one shared model", async () => {

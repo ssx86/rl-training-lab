@@ -87,7 +87,8 @@ export function nextSubject2ExplorationNoise(
 export function sampleSubject2WarmupAction(random: () => number, requiredMotion: -1 | 0 | 1): Subject2Action {
   const intendedGear = requiredMotion === -1 ? -1 : 1;
   const branch = random();
-  const steer = (random() * 2 - 1) * .65;
+  const broadTurn = random() < .2;
+  const steer = broadTurn ? (random() * 2 - 1) * .7 : (random() + random() - 1) * .22;
   const strength = .35 + random() * .5;
   if (branch < .75) return { steer, throttle: strength, brake: 0, gear: intendedGear };
   if (branch < .85) return { steer, throttle: 0, brake: .35 + random() * .45, gear: intendedGear };
@@ -100,6 +101,10 @@ const emptyTerminationCounts = (): Subject2TerminationCounts => ({ passed: 0, co
 
 export function shouldAdvanceTrainingProject(completedAttempts: number, attemptsPerProject: number): boolean {
   return completedAttempts >= attemptsPerProject;
+}
+
+export function shouldUseProjectWarmup(projectSamples: number, warmupSteps: number): boolean {
+  return projectSamples < warmupSteps;
 }
 
 export class Subject2TrainingRuntime {
@@ -184,7 +189,8 @@ export class Subject2TrainingRuntime {
 
   private selectAction(observation: Subject2Observation): Subject2Action {
     if (this.mode === "evaluation") return this.agent.selectAction(observation.vector, 0, this.random);
-    if (this.stepCount < this.warmupSteps) {
+    const project = this.environment.currentScenario().project;
+    if (shouldUseProjectWarmup(this.replay.sizeFor(project), this.warmupSteps)) {
       if (!this.warmupAction || this.warmupActionStepsRemaining <= 0) {
         this.warmupAction = sampleSubject2WarmupAction(this.random, observation.targetMotion);
         this.warmupActionStepsRemaining = WARMUP_ACTION_HOLD_STEPS;
