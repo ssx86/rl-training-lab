@@ -217,7 +217,11 @@ describe("random subject 2 environment", () => {
 
   it("exposes only local geometry and relative target data, never seed or absolute coordinates", () => {
     const observation = new Subject2Environment(generateSubject2Scenario(13)).observe();
-    expect(observation.vector).toHaveLength(48);
+    expect(observation.vector).toHaveLength(57);
+    expect(observation.projectEncoding).toHaveLength(5);
+    expect(observation.projectEncoding.reduce((sum, value) => sum + value, 0)).toBe(1);
+    expect(observation.processStageEncoding).toHaveLength(4);
+    expect(observation.processStageEncoding.reduce((sum, value) => sum + value, 0)).toBe(1);
     expect(observation.targetDistance).toBeGreaterThan(0);
     expect("seed" in observation).toBe(false);
     expect("project" in observation).toBe(false);

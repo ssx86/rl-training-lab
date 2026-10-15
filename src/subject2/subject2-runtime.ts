@@ -1,4 +1,4 @@
-import { ReplayBuffer } from "@/rl/replay-buffer";
+import { StratifiedReplayBuffer } from "@/rl/stratified-replay-buffer";
 import { Td3Agent, type Td3AgentState } from "@/rl/continuous/td3-agent";
 import { describeTd3Config, type Td3Description } from "@/rl/continuous/td3-config";
 import { SUBJECT2_PROJECT_ORDER, type Subject2PoseCheckpoint, type Subject2Project, type Subject2Scenario } from "./subject2-course";
@@ -8,11 +8,13 @@ import { SUBJECT2_ACTION_CODEC, SUBJECT2_ACTION_SIZE, SUBJECT2_VEHICLE, type Sub
 
 export type Subject2Mode = "training" | "evaluation";
 export interface Subject2RuntimeConfig { readonly seed?: number; readonly warmupSteps?: number; readonly batchSize?: number; readonly trainEvery?: number; readonly hiddenUnits?: number; readonly maxScenarioSteps?: number; readonly attemptsPerProject?: number }
-export interface Subject2ProjectStats { readonly attempts: number; readonly passes: number; readonly passRate: number }
+export interface Subject2ProjectStats { readonly attempts: number; readonly passes: number; readonly passRate: number; readonly processCompletionRate: number }
 export type Subject2StatsByProject = Record<Subject2Project, Subject2ProjectStats>;
+export type Subject2CompletedTerminalReason = Exclude<Subject2TerminalReason, null>;
+export type Subject2TerminationCounts = Record<Subject2CompletedTerminalReason, number>;
 
 export interface Subject2RuntimeCheckpoint {
-  readonly version: 1;
+  readonly version: 2;
   readonly mode: Subject2Mode;
   readonly stepCount: number;
   readonly episode: number;
@@ -26,6 +28,7 @@ export interface Subject2RuntimeCheckpoint {
   readonly updates: number;
   readonly trainingStats: Subject2StatsByProject;
   readonly evaluationStats: Subject2StatsByProject;
+  readonly terminationCounts: Subject2TerminationCounts;
   readonly agent: Td3AgentState;
 }
 
@@ -52,8 +55,10 @@ export interface Subject2Snapshot {
   readonly rewardBreakdown: Subject2RewardBreakdown;
   readonly checkpointReached: boolean;
   readonly lastTerminalReason: Subject2TerminalReason;
+  readonly terminationCounts: Subject2TerminationCounts;
   readonly projectStats: Subject2StatsByProject;
   readonly replaySize: number;
+  readonly replayByProject: Record<Subject2Project, number>;
   readonly updates: number;
   readonly criticLoss: number | null;
   readonly actorLoss: number | null;
@@ -63,7 +68,7 @@ export interface Subject2Snapshot {
 }
 
 function noiseAt(step: number): number { const progress = Math.min(1, step / 120_000); return .32 + (.04 - .32) * progress; }
-const WARMUP_ACTION_HOLD_STEPS = Math.round(1 / SUBJECT2_VEHICLE.timeStep);
+const WARMUP_ACTION_HOLD_STEPS = Math.round(.4 / SUBJECT2_VEHICLE.timeStep);
 
 function gaussian(random: () => number): number {
   const first = Math.max(Number.EPSILON, random());
@@ -79,11 +84,19 @@ export function nextSubject2ExplorationNoise(
   return previous.map((value, index) => correlation * value + innovationScale * (innovation[index] ?? 0));
 }
 
-export function sampleSubject2WarmupAction(random: () => number): Subject2Action {
-  return SUBJECT2_ACTION_CODEC.decode(Array.from({ length: SUBJECT2_ACTION_SIZE }, () => random() * 2 - 1));
+export function sampleSubject2WarmupAction(random: () => number, requiredMotion: -1 | 0 | 1): Subject2Action {
+  const intendedGear = requiredMotion === -1 ? -1 : 1;
+  const branch = random();
+  const steer = (random() * 2 - 1) * .65;
+  const strength = .35 + random() * .5;
+  if (branch < .75) return { steer, throttle: strength, brake: 0, gear: intendedGear };
+  if (branch < .85) return { steer, throttle: 0, brake: .35 + random() * .45, gear: intendedGear };
+  if (branch < .95) return { steer, throttle: .1, brake: 0, gear: intendedGear };
+  return { steer, throttle: strength, brake: 0, gear: -intendedGear };
 }
 const EMPTY_REWARD: Subject2RewardBreakdown = { poseProgress: 0, checkpoint: 0, passBonus: 0, timeCost: 0, inactivity: 0, wrongDirection: 0, unsafeSpeed: 0, controlSmoothness: 0, clearance: 0, collision: 0, outOfBounds: 0, rollback: 0, stableHold: 0, startTimeout: 0, stalled: 0, timeout: 0, total: 0 };
-const emptyStats = (): Subject2StatsByProject => Object.fromEntries(SUBJECT2_PROJECT_ORDER.map((project) => [project, { attempts: 0, passes: 0, passRate: 0 }])) as unknown as Subject2StatsByProject;
+const emptyStats = (): Subject2StatsByProject => Object.fromEntries(SUBJECT2_PROJECT_ORDER.map((project) => [project, { attempts: 0, passes: 0, passRate: 0, processCompletionRate: 0 }])) as unknown as Subject2StatsByProject;
+const emptyTerminationCounts = (): Subject2TerminationCounts => ({ passed: 0, collision: 0, "out-of-bounds": 0, rollback: 0, "start-timeout": 0, stalled: 0, timeout: 0 });
 
 export function shouldAdvanceTrainingProject(completedAttempts: number, attemptsPerProject: number): boolean {
   return completedAttempts >= attemptsPerProject;
@@ -93,7 +106,7 @@ export class Subject2TrainingRuntime {
   private readonly baseSeed: number;
   private readonly environment: Subject2Environment;
   private readonly agent: Td3Agent<Subject2Action>;
-  private readonly replay = new ReplayBuffer<Subject2Action>(100_000);
+  private readonly replay = new StratifiedReplayBuffer<Subject2Action, Subject2Project>(SUBJECT2_PROJECT_ORDER, 100_000);
   private readonly random: () => number;
   private readonly warmupSteps: number;
   private readonly batchSize: number;
@@ -127,6 +140,7 @@ export class Subject2TrainingRuntime {
   private readonly modelInfo: Td3Description;
   private readonly trainingStats = emptyStats();
   private readonly evaluationStats = emptyStats();
+  private terminationCounts = emptyTerminationCounts();
 
   constructor(config: Subject2RuntimeConfig = {}) {
     this.baseSeed = config.seed ?? 17;
@@ -172,7 +186,7 @@ export class Subject2TrainingRuntime {
     if (this.mode === "evaluation") return this.agent.selectAction(observation.vector, 0, this.random);
     if (this.stepCount < this.warmupSteps) {
       if (!this.warmupAction || this.warmupActionStepsRemaining <= 0) {
-        this.warmupAction = sampleSubject2WarmupAction(this.random);
+        this.warmupAction = sampleSubject2WarmupAction(this.random, observation.targetMotion);
         this.warmupActionStepsRemaining = WARMUP_ACTION_HOLD_STEPS;
       }
       this.warmupActionStepsRemaining -= 1;
@@ -186,17 +200,18 @@ export class Subject2TrainingRuntime {
     return SUBJECT2_ACTION_CODEC.decode(noisy);
   }
 
-  private recordAttempt(project: Subject2Project, passed: boolean): void {
+  private recordAttempt(project: Subject2Project, passed: boolean, completedConditions: number, totalConditions: number): void {
     const stats = this.mode === "training" ? this.trainingStats : this.evaluationStats;
     const old = stats[project];
     const attempts = old.attempts + 1;
     const passes = old.passes + (passed ? 1 : 0);
-    stats[project] = { attempts, passes, passRate: passes / attempts };
+    const completion = Math.max(0, Math.min(1, completedConditions / Math.max(1, totalConditions)));
+    stats[project] = { attempts, passes, passRate: passes / attempts, processCompletionRate: (old.processCompletionRate * old.attempts + completion) / attempts };
   }
 
   exportCheckpoint(): Subject2RuntimeCheckpoint {
     return {
-      version: 1,
+      version: 2,
       mode: this.mode,
       stepCount: this.stepCount,
       episode: this.episode,
@@ -210,12 +225,13 @@ export class Subject2TrainingRuntime {
       updates: this.updates,
       trainingStats: structuredClone(this.trainingStats),
       evaluationStats: structuredClone(this.evaluationStats),
+      terminationCounts: structuredClone(this.terminationCounts),
       agent: this.agent.exportState(),
     };
   }
 
   importCheckpoint(checkpoint: Subject2RuntimeCheckpoint): void {
-    if (checkpoint.version !== 1 || checkpoint.trainingProjectIndex < 0 || checkpoint.trainingProjectIndex >= SUBJECT2_PROJECT_ORDER.length) {
+    if (checkpoint.version !== 2 || checkpoint.trainingProjectIndex < 0 || checkpoint.trainingProjectIndex >= SUBJECT2_PROJECT_ORDER.length) {
       throw new RangeError("科目二模型存档版本或项目位置不兼容。");
     }
     this.agent.importState(checkpoint.agent);
@@ -233,6 +249,7 @@ export class Subject2TrainingRuntime {
     this.updates = checkpoint.updates;
     Object.assign(this.trainingStats, structuredClone(checkpoint.trainingStats));
     Object.assign(this.evaluationStats, structuredClone(checkpoint.evaluationStats));
+    this.terminationCounts = structuredClone(checkpoint.terminationCounts);
     this.episodeReward = 0;
     this.lastAction = { steer: 0, throttle: 0, brake: 0, gear: 1 };
     this.lastReward = 0;
@@ -251,6 +268,8 @@ export class Subject2TrainingRuntime {
   async step(): Promise<Subject2Snapshot> {
     const observation = this.environment.observe();
     const attemptedProject = this.environment.currentScenario().project;
+    const attemptedCheckpointIndex = this.environment.currentCheckpointIndex();
+    const totalConditions = this.environment.currentScenario().checkpoints.length;
     const inferenceStartedAt = performance.now();
     const action = this.selectAction(observation);
     const inferenceElapsed = performance.now() - inferenceStartedAt;
@@ -266,7 +285,7 @@ export class Subject2TrainingRuntime {
     if (result.checkpointReached) this.checkpointCompletions += 1;
 
     if (this.mode === "training") {
-      this.replay.add({ observation: observation.vector, action, reward: result.reward, nextObservation: result.observation.vector, done: result.done });
+      this.replay.add(attemptedProject, { observation: observation.vector, action, reward: result.reward, nextObservation: result.observation.vector, done: result.done });
       if (this.replay.size >= Math.max(this.warmupSteps, this.batchSize) && this.stepCount % this.trainEvery === 0) {
         const trained = await this.agent.trainBatch(this.replay.sample(this.batchSize, this.random));
         this.criticLoss = trained.criticLoss;
@@ -276,7 +295,9 @@ export class Subject2TrainingRuntime {
     }
 
     if (result.done) {
-      this.recordAttempt(attemptedProject, result.passed);
+      const completedConditions = attemptedCheckpointIndex + (result.checkpointReached ? 1 : 0);
+      this.recordAttempt(attemptedProject, result.passed, completedConditions, totalConditions);
+      if (result.terminalReason) this.terminationCounts[result.terminalReason] += 1;
       if (this.mode === "evaluation") {
         this.evaluationAttempts += 1;
         if (result.passed) this.passes += 1;
@@ -304,8 +325,9 @@ export class Subject2TrainingRuntime {
       checkpoint: this.environment.currentGoal(),
       checkpointIndex: this.environment.currentCheckpointIndex(), observation: this.environment.observe(), action: this.lastAction,
       reward: this.lastReward, episodeReward: this.episodeReward, rewardBreakdown: this.lastRewardBreakdown,
-      checkpointReached: this.lastCheckpointReached, lastTerminalReason: this.lastTerminalReason,
-      projectStats: structuredClone(this.mode === "training" ? this.trainingStats : this.evaluationStats), replaySize: this.replay.size, updates: this.updates,
+      checkpointReached: this.lastCheckpointReached, lastTerminalReason: this.lastTerminalReason, terminationCounts: structuredClone(this.terminationCounts),
+      projectStats: structuredClone(this.mode === "training" ? this.trainingStats : this.evaluationStats), replaySize: this.replay.size,
+      replayByProject: Object.fromEntries(SUBJECT2_PROJECT_ORDER.map((project) => [project, this.replay.sizeFor(project)])) as Record<Subject2Project, number>, updates: this.updates,
       criticLoss: this.criticLoss, actorLoss: this.actorLoss, explorationNoise: this.mode === "training" ? noiseAt(this.stepCount) : 0,
       modelInfo: this.modelInfo, inferenceMs: this.inferenceMs,
     };

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { nextSubject2ExplorationNoise, Subject2TrainingRuntime, shouldAdvanceTrainingProject } from "./subject2-runtime";
+import { nextSubject2ExplorationNoise, sampleSubject2WarmupAction, Subject2TrainingRuntime, shouldAdvanceTrainingProject } from "./subject2-runtime";
 
 describe("random-scene single-car TD3 runtime", () => {
   const runtimes: Subject2TrainingRuntime[] = [];
@@ -17,13 +17,22 @@ describe("random-scene single-car TD3 runtime", () => {
     expect(second.action.throttle * second.action.brake!).toBe(0);
   });
 
-  it("uses a real warmup action and holds it for one simulated second", async () => {
+  it("uses a motion-aware warmup action and refreshes it after 400 simulated milliseconds", async () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 31 }); runtimes.push(runtime);
     const first = await runtime.step();
-    for (let index = 1; index < 10; index += 1) {
+    for (let index = 1; index < 4; index += 1) {
       expect((await runtime.step()).action).toEqual(first.action);
     }
+    expect((await runtime.step()).action).not.toEqual(first.action);
     expect(first.action.throttle * first.action.brake!).toBe(0);
+  });
+
+  it("biases warmup samples toward useful motion in the required gear", () => {
+    let state = 7;
+    const random = () => ((state = (state * 48271) % 2147483647) / 2147483647);
+    const actions = Array.from({ length: 500 }, () => sampleSubject2WarmupAction(random, -1));
+    expect(actions.filter((action) => action.gear! < -.25 && action.throttle > 0).length).toBeGreaterThan(300);
+    expect(actions.every((action) => action.throttle * action.brake! === 0)).toBe(true);
   });
 
   it("uses correlated exploration so a small opposite innovation does not flip the pedal axis", () => {
@@ -35,7 +44,7 @@ describe("random-scene single-car TD3 runtime", () => {
   it("reports the exact model and measured inference latency", async () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 3 }); runtimes.push(runtime);
     const snapshot = await runtime.step();
-    expect(snapshot.modelInfo).toMatchObject({ algorithm: "TD3", observationSize: 48, actionSize: 3, actorParameters: 23_171, onlineTrainableParameters: 69_765 });
+    expect(snapshot.modelInfo).toMatchObject({ algorithm: "TD3", observationSize: 57, actionSize: 3, actorParameters: 24_323, onlineTrainableParameters: 73_221 });
     expect(snapshot.inferenceMs).toBeGreaterThanOrEqual(0);
     expect(Number.isFinite(snapshot.inferenceMs)).toBe(true);
   });
@@ -64,6 +73,7 @@ describe("random-scene single-car TD3 runtime", () => {
     for (let index = 0; index < 4; index += 1) visited.push((await runtime.step()).scenario.project);
     expect(visited).toEqual(["reverse-parking", "side-parking", "ramp", "s-curve", "right-angle"]);
     expect(runtime.snapshot().replaySize).toBe(4);
+    expect(runtime.snapshot().replayByProject).toMatchObject({ "reverse-parking": 1, "side-parking": 1, ramp: 1, "s-curve": 1 });
     expect(runtime.snapshot().projectAttempts).toBe(0);
   });
 
@@ -79,10 +89,14 @@ describe("random-scene single-car TD3 runtime", () => {
     expect(snapshot.scenario.seed).not.toBe(trainingSeed);
   });
 
-  it("does not leak question identity, coordinates, fixed order or navigation", () => {
+  it("exposes project and public process stage without leaking coordinates, seed, fixed order or navigation", () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100 }); runtimes.push(runtime);
     const observation = runtime.snapshot().observation;
-    expect(observation.vector).toHaveLength(48);
+    expect(observation.vector).toHaveLength(57);
+    expect(observation.projectEncoding).toHaveLength(5);
+    expect(observation.processStageEncoding).toHaveLength(4);
+    expect(observation.projectEncoding.reduce((sum, value) => sum + value, 0)).toBe(1);
+    expect(observation.processStageEncoding.reduce((sum, value) => sum + value, 0)).toBe(1);
     expect("route" in observation).toBe(false);
     expect("project" in observation).toBe(false);
     expect("seed" in observation).toBe(false);
@@ -93,6 +107,8 @@ describe("random-scene single-car TD3 runtime", () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 18, maxScenarioSteps: 1 }); runtimes.push(runtime);
     await runtime.step();
     expect(Object.values(runtime.snapshot().projectStats).reduce((sum, stats) => sum + stats.attempts, 0)).toBe(1);
+    expect(Object.values(runtime.snapshot().projectStats).every((stats) => stats.processCompletionRate >= 0 && stats.processCompletionRate <= 1)).toBe(true);
+    expect(runtime.snapshot().terminationCounts.timeout).toBe(1);
     runtime.setMode("evaluation");
     expect(Object.values(runtime.snapshot().projectStats).reduce((sum, stats) => sum + stats.attempts, 0)).toBe(0);
     await runtime.step();
@@ -104,6 +120,7 @@ describe("random-scene single-car TD3 runtime", () => {
     await source.step();
     await source.step();
     const checkpoint = source.exportCheckpoint();
+    expect(checkpoint.version).toBe(2);
     const restored = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 27 }); runtimes.push(restored);
 
     restored.importCheckpoint(checkpoint);

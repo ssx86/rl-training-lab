@@ -1,5 +1,5 @@
 import { distanceBetween, normalizeAngle } from "@/simulation/geometry";
-import type { Subject2PoseCheckpoint, Subject2Scenario } from "./subject2-course";
+import { SUBJECT2_PROJECT_ORDER, type Subject2PoseCheckpoint, type Subject2Scenario } from "./subject2-course";
 import { collidesWithCourse, isVehicleFullyInsideBay, isVehicleWithinRoadSurfaces, subject2FrontBumperPoint, subject2FrontWheelContactPoints } from "./subject2-collision";
 import { generateSubject2Scenario } from "./subject2-scenario";
 import { senseSubject2Course, SUBJECT2_SENSOR_RANGE, type Subject2Scan } from "./subject2-sensors";
@@ -24,6 +24,8 @@ export interface Subject2Observation {
   readonly longitudinalAcceleration: number;
   readonly holdProgress: number;
   readonly rampPhase: RampTrainingPhase;
+  readonly projectEncoding: readonly number[];
+  readonly processStageEncoding: readonly number[];
 }
 export type RampTrainingPhase = "approach" | "braking" | "holding" | "launch" | null;
 export type Subject2TerminalReason = "passed" | "collision" | "out-of-bounds" | "rollback" | "start-timeout" | "stalled" | "timeout" | null;
@@ -39,7 +41,7 @@ export interface Subject2StepResult {
   readonly terminalReason: Subject2TerminalReason;
 }
 
-export const SUBJECT2_OBSERVATION_SIZE = 48;
+export const SUBJECT2_OBSERVATION_SIZE = 57;
 
 export function checkpointPoseError(vehicle: Subject2VehicleState, target: Subject2PoseCheckpoint): PoseError {
   const distance = distanceBetween(vehicle, target);
@@ -228,6 +230,8 @@ export class Subject2Environment {
     const grade = this.scenario.project === "ramp" ? SUBJECT2_STANDARD.ramp.grade : 0;
     const requiredHoldSteps = Math.round(SUBJECT2_STANDARD.ramp.holdDurationSeconds / SUBJECT2_VEHICLE.timeStep);
     const holdProgress = this.scenario.project === "ramp" ? Math.min(1, this.rampHoldSteps / requiredHoldSteps) : 0;
+    const projectEncoding = SUBJECT2_PROJECT_ORDER.map((project) => project === this.scenario.project ? 1 : 0);
+    const processStageEncoding = Array.from({ length: 4 }, (_, index) => index === this.checkpointIndex ? 1 : 0);
     const vector = [
       ...scan.beams.map((beam) => beam.distanceMeters / SUBJECT2_SENSOR_RANGE),
       Math.min(1, targetDistance / Math.hypot(this.scenario.width, this.scenario.height)),
@@ -236,12 +240,14 @@ export class Subject2Environment {
       this.vehicle.throttle, this.vehicle.brake, this.vehicle.gear,
       Math.max(-1, Math.min(1, this.vehicle.acceleration / SUBJECT2_VEHICLE.serviceBrakeDeceleration)),
       Math.max(-1, Math.min(1, stopLineDistance / 20)), grade / .1, holdProgress,
+      ...projectEncoding, ...processStageEncoding,
     ];
     if (vector.length !== SUBJECT2_OBSERVATION_SIZE) throw new Error("Subject 2 observation shape changed unexpectedly.");
     return {
       vector, scan, targetDistance, targetBearing, targetHeadingError, targetMotion, localPhaseProgress,
       stopLineDistance, grade, brake: this.vehicle.brake, longitudinalAcceleration: this.vehicle.acceleration,
       holdProgress, rampPhase: this.rampPhase,
+      projectEncoding, processStageEncoding,
     };
   }
 

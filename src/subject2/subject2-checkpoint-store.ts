@@ -1,7 +1,8 @@
 import type { Td3AgentState, Td3SerializedTensor } from "@/rl/continuous/td3-agent";
 import type { Subject2RuntimeCheckpoint } from "./subject2-runtime";
 
-export const SUBJECT2_CHECKPOINT_KEY = "qlearning.subject2.checkpoint.v1";
+export const SUBJECT2_CHECKPOINT_KEY = "qlearning.subject2.checkpoint.v2";
+export const LEGACY_SUBJECT2_CHECKPOINT_KEY = "qlearning.subject2.checkpoint.v1";
 
 export interface StoredSubject2Checkpoint {
   readonly savedAt: string;
@@ -18,7 +19,7 @@ type EncodedAgentState = Omit<Td3AgentState, "networks"> & {
 };
 
 type EncodedRuntimeCheckpoint = Omit<Subject2RuntimeCheckpoint, "agent"> & { readonly agent: EncodedAgentState };
-interface EncodedStoredCheckpoint { readonly schemaVersion: 1; readonly savedAt: string; readonly checkpoint: EncodedRuntimeCheckpoint }
+interface EncodedStoredCheckpoint { readonly schemaVersion: 2; readonly savedAt: string; readonly checkpoint: EncodedRuntimeCheckpoint }
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -49,7 +50,7 @@ function decodeTensor(tensor: EncodedTensor): Td3SerializedTensor {
 
 export function saveSubject2Checkpoint(record: StoredSubject2Checkpoint, storage: Storage = localStorage): void {
   const encoded: EncodedStoredCheckpoint = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     savedAt: record.savedAt,
     checkpoint: {
       ...record.checkpoint,
@@ -67,7 +68,7 @@ export function loadSubject2Checkpoint(storage: Storage = localStorage): StoredS
     const raw = storage.getItem(SUBJECT2_CHECKPOINT_KEY);
     if (!raw) return null;
     const encoded = JSON.parse(raw) as EncodedStoredCheckpoint;
-    if (encoded.schemaVersion !== 1 || encoded.checkpoint?.version !== 1 || encoded.checkpoint.agent?.version !== 1
+    if (encoded.schemaVersion !== 2 || encoded.checkpoint?.version !== 2 || encoded.checkpoint.agent?.version !== 1
       || !Array.isArray(encoded.checkpoint.agent.networks) || !Number.isFinite(Date.parse(encoded.savedAt))) return null;
     return {
       savedAt: encoded.savedAt,
@@ -82,4 +83,8 @@ export function loadSubject2Checkpoint(storage: Storage = localStorage): StoredS
   } catch {
     return null;
   }
+}
+
+export function hasLegacySubject2Checkpoint(storage: Storage = localStorage): boolean {
+  return storage.getItem(LEGACY_SUBJECT2_CHECKPOINT_KEY) !== null;
 }

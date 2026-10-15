@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Subject2Mode, Subject2Snapshot } from "@/subject2/subject2-runtime";
-import { loadSubject2Checkpoint, saveSubject2Checkpoint, type StoredSubject2Checkpoint } from "@/subject2/subject2-checkpoint-store";
+import { hasLegacySubject2Checkpoint, loadSubject2Checkpoint, saveSubject2Checkpoint, type StoredSubject2Checkpoint } from "@/subject2/subject2-checkpoint-store";
 import { interpolateSubject2Vehicle } from "@/subject2/subject2-display";
 import type { Subject2VehicleState } from "@/subject2/subject2-vehicle";
 import type { Subject2Command, Subject2Envelope, Subject2RuntimeMetrics, Subject2TrainingSpeed } from "@/workers/subject2-trainer-protocol";
@@ -45,7 +45,9 @@ export function useSubject2Lab() {
     ? { available: true, savedAt: initialCheckpoint.savedAt, step: initialCheckpoint.checkpoint.stepCount, updates: initialCheckpoint.checkpoint.updates, reason: "existing" }
     : { available: false, savedAt: null, step: 0, updates: 0, reason: null });
   const [restorePromptOpen, setRestorePromptOpen] = useState(Boolean(initialCheckpoint));
-  const [checkpointError, setCheckpointError] = useState<string | null>(null);
+  const [checkpointError, setCheckpointError] = useState<string | null>(() => !initialCheckpoint && hasLegacySubject2Checkpoint()
+    ? "检测到旧版 48 维模型。新版模型加入了科目与流程阶段，旧权重无法安全恢复，请重新训练。"
+    : null);
 
   useEffect(() => {
     if (typeof Worker === "undefined") return;

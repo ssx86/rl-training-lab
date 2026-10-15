@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { Subject2TrainingRuntime } from "./subject2-runtime";
-import { SUBJECT2_CHECKPOINT_KEY, loadSubject2Checkpoint, saveSubject2Checkpoint } from "./subject2-checkpoint-store";
+import { hasLegacySubject2Checkpoint, LEGACY_SUBJECT2_CHECKPOINT_KEY, SUBJECT2_CHECKPOINT_KEY, loadSubject2Checkpoint, saveSubject2Checkpoint } from "./subject2-checkpoint-store";
 
 describe("subject 2 browser checkpoint store", () => {
   afterEach(() => localStorage.clear());
@@ -22,5 +22,11 @@ describe("subject 2 browser checkpoint store", () => {
   it("ignores a damaged or incompatible local checkpoint", () => {
     localStorage.setItem(SUBJECT2_CHECKPOINT_KEY, "{broken");
     expect(loadSubject2Checkpoint()).toBeNull();
+  });
+
+  it("detects a legacy 48-dimensional checkpoint without trying to load it", () => {
+    localStorage.setItem(LEGACY_SUBJECT2_CHECKPOINT_KEY, "legacy-model");
+    expect(loadSubject2Checkpoint()).toBeNull();
+    expect(hasLegacySubject2Checkpoint()).toBe(true);
   });
 });
