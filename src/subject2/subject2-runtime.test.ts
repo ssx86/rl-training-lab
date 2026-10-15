@@ -121,6 +121,13 @@ describe("random-scene single-car TD3 runtime", () => {
     expect(Object.values(runtime.snapshot().projectStats).reduce((sum, stats) => sum + stats.attempts, 0)).toBe(1);
   });
 
+  it("keeps the latest terminal reason visible throughout the next attempt", async () => {
+    const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 8, maxScenarioSteps: 2 }); runtimes.push(runtime);
+    await runtime.step();
+    expect((await runtime.step()).lastTerminalReason).toBe("timeout");
+    expect((await runtime.step()).lastTerminalReason).toBe("timeout");
+  });
+
   it("exports and restores model weights and visible training progress without replay", async () => {
     const source = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 27 }); runtimes.push(source);
     await source.step();

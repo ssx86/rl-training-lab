@@ -287,7 +287,7 @@ export class Subject2TrainingRuntime {
     this.lastReward = result.reward;
     this.lastRewardBreakdown = result.rewardBreakdown;
     this.lastCheckpointReached = result.checkpointReached;
-    this.lastTerminalReason = result.terminalReason;
+    if (result.terminalReason) this.lastTerminalReason = result.terminalReason;
     if (result.checkpointReached) this.checkpointCompletions += 1;
 
     if (this.mode === "training") {
