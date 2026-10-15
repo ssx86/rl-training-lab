@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Subject2Mode, Subject2Snapshot } from "@/subject2/subject2-runtime";
+import type { Subject2Mode, Subject2Snapshot, Subject2TrainingScope } from "@/subject2/subject2-runtime";
+import type { Subject2Project } from "@/subject2/subject2-course";
 import { hasLegacySubject2Checkpoint, loadSubject2Checkpoint, saveSubject2Checkpoint, type StoredSubject2Checkpoint } from "@/subject2/subject2-checkpoint-store";
 import { interpolateSubject2Vehicle } from "@/subject2/subject2-display";
 import type { Subject2VehicleState } from "@/subject2/subject2-vehicle";
@@ -75,7 +76,7 @@ export function useSubject2Lab() {
           const completionRate = completedAttempts === 0 ? 0 : Object.values(next.projectStats)
             .reduce((sum, stats) => sum + stats.processCompletionRate * stats.attempts, 0) / completedAttempts * 100;
           historyRef.current = [...historyRef.current, {
-            step: next.step, total: next.reward, progress: reward.poseProgress + reward.stableHold,
+            step: next.step, total: next.reward, progress: reward.poseProgress + reward.bayOverlapProgress + reward.stableHold,
             task: reward.checkpoint + reward.passBonus, penalties,
             throttle: next.vehicle.throttle, brake: next.vehicle.brake, stopped: Math.abs(next.vehicle.speed) < .08,
             completionRate,
@@ -132,6 +133,9 @@ export function useSubject2Lab() {
   const pause = useCallback(() => { workerRef.current?.postMessage({ type: "pause" } satisfies Subject2Command); setStatus("paused"); }, []);
   const setMode = useCallback((next: Subject2Mode) => { setModeState(next); workerRef.current?.postMessage({ type: "set-mode", mode: next } satisfies Subject2Command); }, []);
   const setSpeed = useCallback((next: Subject2TrainingSpeed) => { speedRef.current = next; setSpeedState(next); workerRef.current?.postMessage({ type: "set-speed", speed: next } satisfies Subject2Command); }, []);
+  const setTrainingSelection = useCallback((scope: Subject2TrainingScope, project: Subject2Project) => {
+    workerRef.current?.postMessage({ type: "set-training-selection", scope, project } satisfies Subject2Command);
+  }, []);
 
   const saveCheckpoint = useCallback(() => {
     if (!snapshot) return;
@@ -152,6 +156,6 @@ export function useSubject2Lab() {
 
   return {
     snapshot, rewardHistory, mode, speed, status, error, metrics, checkpointInfo, checkpointError, restorePromptOpen,
-    setMode, setSpeed, start, pause, saveCheckpoint, restoreCheckpoint, dismissRestorePrompt,
+    setMode, setSpeed, setTrainingSelection, start, pause, saveCheckpoint, restoreCheckpoint, dismissRestorePrompt,
   };
 }

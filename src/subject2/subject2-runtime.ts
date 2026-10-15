@@ -7,6 +7,7 @@ import { createSeededRandom, evaluationScenarioSeed, generateSubject2Scenario, t
 import { SUBJECT2_ACTION_CODEC, SUBJECT2_ACTION_SIZE, SUBJECT2_VEHICLE, type Subject2Action, type Subject2VehicleState } from "./subject2-vehicle";
 
 export type Subject2Mode = "training" | "evaluation";
+export type Subject2TrainingScope = "rotation" | "single";
 export interface Subject2RuntimeConfig { readonly seed?: number; readonly warmupSteps?: number; readonly batchSize?: number; readonly trainEvery?: number; readonly hiddenUnits?: number; readonly maxScenarioSteps?: number; readonly attemptsPerProject?: number }
 export interface Subject2ProjectStats { readonly attempts: number; readonly passes: number; readonly passRate: number; readonly processCompletionRate: number }
 export type Subject2StatsByProject = Record<Subject2Project, Subject2ProjectStats>;
@@ -23,6 +24,8 @@ export interface Subject2RuntimeCheckpoint {
   readonly checkpointCompletions: number;
   readonly sceneGeneration: number;
   readonly trainingProjectIndex: number;
+  readonly trainingScope?: Subject2TrainingScope;
+  readonly selectedProject?: Subject2Project;
   readonly projectAttempts: number;
   readonly projectPasses: number;
   readonly updates: number;
@@ -46,6 +49,8 @@ export interface Subject2Snapshot {
   readonly projectAttempts: number;
   readonly projectPasses: number;
   readonly attemptsPerProject: number;
+  readonly trainingScope: Subject2TrainingScope;
+  readonly selectedProject: Subject2Project;
   readonly checkpoint: Subject2PoseCheckpoint;
   readonly checkpointIndex: number;
   readonly observation: Subject2Observation;
@@ -95,7 +100,7 @@ export function sampleSubject2WarmupAction(random: () => number, requiredMotion:
   if (branch < .95) return { steer, throttle: .1, brake: 0, gear: intendedGear };
   return { steer, throttle: strength, brake: 0, gear: -intendedGear };
 }
-const EMPTY_REWARD: Subject2RewardBreakdown = { poseProgress: 0, checkpoint: 0, passBonus: 0, timeCost: 0, inactivity: 0, wrongDirection: 0, unsafeSpeed: 0, controlSmoothness: 0, clearance: 0, collision: 0, outOfBounds: 0, rollback: 0, stableHold: 0, startTimeout: 0, stalled: 0, timeout: 0, total: 0 };
+const EMPTY_REWARD: Subject2RewardBreakdown = { poseProgress: 0, bayOverlapProgress: 0, checkpoint: 0, passBonus: 0, timeCost: 0, inactivity: 0, wrongDirection: 0, unsafeSpeed: 0, controlSmoothness: 0, clearance: 0, collision: 0, outOfBounds: 0, rollback: 0, stableHold: 0, startTimeout: 0, stalled: 0, timeout: 0, total: 0 };
 const emptyStats = (): Subject2StatsByProject => Object.fromEntries(SUBJECT2_PROJECT_ORDER.map((project) => [project, { attempts: 0, passes: 0, passRate: 0, processCompletionRate: 0 }])) as unknown as Subject2StatsByProject;
 const emptyTerminationCounts = (): Subject2TerminationCounts => ({ passed: 0, collision: 0, "out-of-bounds": 0, rollback: 0, "start-timeout": 0, stalled: 0, timeout: 0 });
 
@@ -127,6 +132,8 @@ export class Subject2TrainingRuntime {
   private sceneGeneration = 0;
   private sceneChangedAtStep = 0;
   private trainingProjectIndex = 0;
+  private trainingScope: Subject2TrainingScope = "rotation";
+  private selectedProject: Subject2Project = SUBJECT2_PROJECT_ORDER[0];
   private projectAttempts = 0;
   private projectPasses = 0;
   private updates = 0;
@@ -167,8 +174,22 @@ export class Subject2TrainingRuntime {
     this.episodeReward = 0;
     this.projectAttempts = 0;
     this.projectPasses = 0;
-    if (mode === "training") this.trainingProjectIndex = 0;
+    if (mode === "training" && this.trainingScope === "rotation") {
+      this.trainingProjectIndex = 0;
+      this.selectedProject = SUBJECT2_PROJECT_ORDER[0];
+    }
     this.advanceScenario();
+  }
+
+  setTrainingSelection(scope: Subject2TrainingScope, project: Subject2Project): void {
+    if (!SUBJECT2_PROJECT_ORDER.includes(project)) throw new RangeError("未知的科目二训练项目。");
+    if (scope === this.trainingScope && project === this.selectedProject) return;
+    this.trainingScope = scope;
+    this.selectedProject = project;
+    this.trainingProjectIndex = SUBJECT2_PROJECT_ORDER.indexOf(project);
+    this.projectAttempts = 0;
+    this.projectPasses = 0;
+    if (this.mode === "training") this.advanceScenario();
   }
 
   private nextSeed(): number {
@@ -183,7 +204,9 @@ export class Subject2TrainingRuntime {
     this.warmupAction = null;
     this.warmupActionStepsRemaining = 0;
     this.explorationState.fill(0);
-    const project = this.mode === "training" ? SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex] : undefined;
+    const project = this.mode === "training"
+      ? this.trainingScope === "single" ? this.selectedProject : SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex]
+      : undefined;
     this.environment.reset(generateSubject2Scenario(this.nextSeed(), project));
   }
 
@@ -226,6 +249,8 @@ export class Subject2TrainingRuntime {
       checkpointCompletions: this.checkpointCompletions,
       sceneGeneration: this.sceneGeneration,
       trainingProjectIndex: this.trainingProjectIndex,
+      trainingScope: this.trainingScope,
+      selectedProject: this.selectedProject,
       projectAttempts: this.projectAttempts,
       projectPasses: this.projectPasses,
       updates: this.updates,
@@ -250,6 +275,8 @@ export class Subject2TrainingRuntime {
     this.sceneGeneration = checkpoint.sceneGeneration;
     this.sceneChangedAtStep = checkpoint.stepCount;
     this.trainingProjectIndex = checkpoint.trainingProjectIndex;
+    this.trainingScope = checkpoint.trainingScope ?? "rotation";
+    this.selectedProject = checkpoint.selectedProject ?? SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex];
     this.projectAttempts = checkpoint.projectAttempts;
     this.projectPasses = checkpoint.projectPasses;
     this.updates = checkpoint.updates;
@@ -267,7 +294,9 @@ export class Subject2TrainingRuntime {
     this.warmupAction = null;
     this.warmupActionStepsRemaining = 0;
     this.explorationState.fill(0);
-    const project = this.mode === "training" ? SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex] : undefined;
+    const project = this.mode === "training"
+      ? this.trainingScope === "single" ? this.selectedProject : SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex]
+      : undefined;
     this.environment.reset(generateSubject2Scenario(this.nextSeed(), project));
   }
 
@@ -311,8 +340,9 @@ export class Subject2TrainingRuntime {
       } else {
         this.projectAttempts += 1;
         if (result.passed) this.projectPasses += 1;
-        if (shouldAdvanceTrainingProject(this.projectAttempts, this.attemptsPerProject)) {
+        if (this.trainingScope === "rotation" && shouldAdvanceTrainingProject(this.projectAttempts, this.attemptsPerProject)) {
           this.trainingProjectIndex = (this.trainingProjectIndex + 1) % SUBJECT2_PROJECT_ORDER.length;
+          this.selectedProject = SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex];
           this.projectAttempts = 0;
           this.projectPasses = 0;
         }
@@ -328,6 +358,7 @@ export class Subject2TrainingRuntime {
       checkpointCompletions: this.checkpointCompletions, vehicle: this.environment.snapshot(), scenario: this.environment.currentScenario(),
       sceneGeneration: this.sceneGeneration, sceneChangedAtStep: this.sceneChangedAtStep,
       projectAttempts: this.projectAttempts, projectPasses: this.projectPasses, attemptsPerProject: this.attemptsPerProject,
+      trainingScope: this.trainingScope, selectedProject: this.selectedProject,
       checkpoint: this.environment.currentGoal(),
       checkpointIndex: this.environment.currentCheckpointIndex(), observation: this.environment.observe(), action: this.lastAction,
       reward: this.lastReward, episodeReward: this.episodeReward, rewardBreakdown: this.lastRewardBreakdown,

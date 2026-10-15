@@ -33,6 +33,7 @@ describe("Subject2Lab attempt resets", () => {
       restorePromptOpen: false,
       setMode: vi.fn(),
       setSpeed: vi.fn(),
+      setTrainingSelection: vi.fn(),
       start: vi.fn(),
       pause: vi.fn(),
       saveCheckpoint: vi.fn(),

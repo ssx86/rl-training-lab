@@ -1,4 +1,5 @@
-import type { Subject2Mode, Subject2RuntimeCheckpoint, Subject2Snapshot } from "@/subject2/subject2-runtime";
+import type { Subject2Mode, Subject2RuntimeCheckpoint, Subject2Snapshot, Subject2TrainingScope } from "@/subject2/subject2-runtime";
+import type { Subject2Project } from "@/subject2/subject2-course";
 
 export type Subject2TrainingSpeed = 1 | 4 | 16 | "max";
 export interface Subject2RuntimeMetrics { readonly backend: string; readonly stepsPerSecond: number }
@@ -19,6 +20,7 @@ export type Subject2Command =
   | { type: "resume" }
   | { type: "set-mode"; mode: Subject2Mode }
   | { type: "set-speed"; speed: Subject2TrainingSpeed }
+  | { type: "set-training-selection"; scope: Subject2TrainingScope; project: Subject2Project }
   | { type: "request-checkpoint" }
   | { type: "load-checkpoint"; checkpoint: Subject2RuntimeCheckpoint }
   | { type: "dispose" };

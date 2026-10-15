@@ -85,6 +85,10 @@ scope.addEventListener("message", (event: MessageEvent<Subject2Command>) => {
     else if (command.type === "resume") { if (!running) { running = true; generation += 1; post({ type: "status", status: "running" }); void pump(generation); } }
     else if (command.type === "set-mode") { mode = command.mode; runtime.setMode(mode); }
     else if (command.type === "set-speed") speed = command.speed;
+    else if (command.type === "set-training-selection") {
+      runtime.setTrainingSelection(command.scope, command.project);
+      post({ type: "snapshot", snapshot: runtime.snapshot(), metrics: { backend, stepsPerSecond } });
+    }
     else if (command.type === "request-checkpoint") postCheckpoint("manual");
     else if (command.type === "load-checkpoint") {
       running = false; generation += 1; runtime.importCheckpoint(command.checkpoint); mode = command.checkpoint.mode;

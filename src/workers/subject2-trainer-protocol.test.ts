@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shouldAutoCheckpoint, subject2Cadence } from "./subject2-trainer-protocol";
+import { shouldAutoCheckpoint, subject2Cadence, type Subject2Command } from "./subject2-trainer-protocol";
 
 describe("subject 2 trainer cadence", () => {
   it("maps 1x to the real 100 ms physics clock", () => {
@@ -17,5 +17,10 @@ describe("subject 2 trainer cadence", () => {
     expect(shouldAutoCheckpoint(0, 1_000)).toBe(true);
     expect(shouldAutoCheckpoint(1_000, 1_999)).toBe(false);
     expect(shouldAutoCheckpoint(1_000, 2_000)).toBe(true);
+  });
+
+  it("carries an explicit scope and subject when training selection changes", () => {
+    const command = { type: "set-training-selection", scope: "single", project: "reverse-parking" } satisfies Subject2Command;
+    expect(command).toEqual({ type: "set-training-selection", scope: "single", project: "reverse-parking" });
   });
 });

@@ -83,6 +83,29 @@ describe("random-scene single-car TD3 runtime", () => {
     expect(runtime.snapshot().projectAttempts).toBe(0);
   });
 
+  it("keeps training one selected subject beyond the rotation interval", async () => {
+    const runtime = new Subject2TrainingRuntime({ warmupSteps: 1_000, seed: 20, maxScenarioSteps: 1, attemptsPerProject: 2 }); runtimes.push(runtime);
+    runtime.setTrainingSelection("single", "s-curve");
+    expect(runtime.snapshot()).toMatchObject({ trainingScope: "single", selectedProject: "s-curve" });
+    for (let index = 0; index < 5; index += 1) {
+      const snapshot = await runtime.step();
+      expect(snapshot.scenario.project).toBe("s-curve");
+    }
+    expect(runtime.snapshot().projectAttempts).toBe(5);
+  });
+
+  it("switches training scope without recording a failure or clearing shared experience", async () => {
+    const runtime = new Subject2TrainingRuntime({ warmupSteps: 1_000, seed: 21, maxScenarioSteps: 20 }); runtimes.push(runtime);
+    await runtime.step();
+    const before = runtime.snapshot();
+    runtime.setTrainingSelection("single", "right-angle");
+    const after = runtime.snapshot();
+    expect(after.scenario.project).toBe("right-angle");
+    expect(after.step).toBe(before.step);
+    expect(after.replaySize).toBe(before.replaySize);
+    expect(after.projectStats[before.scenario.project].attempts).toBe(0);
+  });
+
   it("freezes replay and exploration while evaluating the same fixed maps", async () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 4 }); runtimes.push(runtime);
     await runtime.step();
@@ -134,6 +157,7 @@ describe("random-scene single-car TD3 runtime", () => {
     await source.step();
     const checkpoint = source.exportCheckpoint();
     expect(checkpoint.version).toBe(2);
+    expect(checkpoint.trainingScope).toBe("rotation");
     const restored = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 27 }); runtimes.push(restored);
 
     restored.importCheckpoint(checkpoint);
@@ -142,6 +166,7 @@ describe("random-scene single-car TD3 runtime", () => {
       episode: source.snapshot().episode,
       checkpointCompletions: source.snapshot().checkpointCompletions,
       replaySize: 0,
+      trainingScope: "rotation",
     });
     expect(restored.exportCheckpoint().agent.networks[0][0].values)
       .toEqual(checkpoint.agent.networks[0][0].values);
