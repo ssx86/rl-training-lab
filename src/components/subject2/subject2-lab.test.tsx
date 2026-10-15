@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { useSubject2Lab } from "@/hooks/use-subject2-lab";
 import { Subject2TrainingRuntime } from "@/subject2/subject2-runtime";
@@ -50,5 +50,26 @@ describe("Subject2Lab attempt resets", () => {
     expect(screen.getAllByText("碰线 / 碰撞")).toHaveLength(2);
     expect(screen.getByText("7 次")).toBeInTheDocument();
     expect(screen.getByText("3 次")).toBeInTheDocument();
+  });
+
+  it("switches training scope and selected subject through explicit controls", () => {
+    const setTrainingSelection = vi.fn();
+    vi.mocked(useSubject2Lab).mockReturnValue({
+      snapshot: { ...runtime.snapshot(), trainingScope: "single", selectedProject: "s-curve" },
+      rewardHistory: [], mode: "training", speed: "max", status: "paused", error: null,
+      metrics: { backend: "webgl", stepsPerSecond: 0 },
+      checkpointInfo: { available: false, savedAt: null, step: 0, updates: 0, reason: null },
+      checkpointError: null, restorePromptOpen: false,
+      setMode: vi.fn(), setSpeed: vi.fn(), setTrainingSelection,
+      start: vi.fn(), pause: vi.fn(), saveCheckpoint: vi.fn(), restoreCheckpoint: vi.fn(), dismissRestorePrompt: vi.fn(),
+    });
+
+    render(<Subject2Lab />);
+
+    expect(screen.getByText("持续训练所选科目，不自动切换；切换科目不会清空已学权重或经验。")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("专训科目"), { target: { value: "right-angle" } });
+    expect(setTrainingSelection).toHaveBeenCalledWith("single", "right-angle");
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "五项轮换" }), { button: 0, ctrlKey: false });
+    expect(setTrainingSelection).toHaveBeenCalledWith("rotation", "s-curve");
   });
 });

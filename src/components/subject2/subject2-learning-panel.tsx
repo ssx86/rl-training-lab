@@ -16,7 +16,7 @@ interface Props {
 
 const DEFAULT_MODEL = describeTd3Config({ observationSize: 57, actionSize: 3, hiddenUnits: 128 });
 const rewardRows = [
-  ["姿态进步", "poseProgress"], ["过程条件", "checkpoint"], ["全程通过", "passBonus"],
+  ["姿态进步", "poseProgress"], ["车身入库进步", "bayOverlapProgress"], ["过程条件", "checkpoint"], ["全程通过", "passBonus"],
   ["每步时间", "timeCost"], ["停滞", "inactivity"], ["方向错误", "wrongDirection"],
   ["超速", "unsafeSpeed"], ["控制突变", "controlSmoothness"], ["安全间距", "clearance"],
   ["稳定制动保持", "stableHold"], ["碰线", "collision"], ["驶出考试区", "outOfBounds"],
@@ -61,10 +61,10 @@ export function Subject2LearningPanel({ snapshot, history, backend }: Props) {
           <TabsContent value="reward">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
               <div className="space-y-4 text-xs leading-5">
-                <Formula>rₜ = r姿态进步 + r稳定保持 + r过程条件 + r通过 − c时间 − c停滞 − c方向 − c速度 − c控制 − c贴边 − c终止</Formula>
-                <div><h3 className="font-semibold">1. 最终目标固定，过程条件提供密集反馈</h3><Formula>Φ(s) = exp(−(d当前条件 + 4|Δθ当前条件| + 0.8 max(0, |v|−v限)) / 12)</Formula><Formula>r姿态进步 = clip(12[Φ(sₜ₊₁) − Φ(sₜ)], −4, 4)</Formula><p className="mt-2 text-muted-foreground">界面仍只把最终完成位置画成目标；模型明确接收当前科目和公开流程阶段，奖励依据当前公开考试条件（越线、入库、停车区）判断是否正在接近，不增加隐藏导航点。</p></div>
+                <Formula>rₜ = r姿态进步 + r车身入库进步 + r稳定保持 + r过程条件 + r通过 − c时间 − c停滞 − c方向 − c速度 − c控制 − c贴边 − c终止</Formula>
+                <div><h3 className="font-semibold">1. 最终目标固定，改善才得分</h3><Formula>Φ(s) = exp(−(d目标 + 4|Δθ目标| + 0.8 max(0, |v|−v限)) / 12)</Formula><Formula>r姿态进步 = clip(12[Φ(sₜ₊₁) − Φ(sₜ)], −4, 4)</Formula><Formula>r车身入库进步 = clip(30[overlapₜ₊₁ − overlapₜ], −8, 8)</Formula><p className="mt-2 text-muted-foreground">倒车入库从合法起倒姿态开始，只有车库这一个目标。overlap 是车身矩形与车位矩形的真实相交面积占车身面积的比例；更近、方向更正、车身进入更多都会得到连续反馈，停在原处不会反复得分，也没有隐藏路线点。</p></div>
                 <div><h3 className="font-semibold">2. 坡停必须形成连续证据</h3><p className="mt-1 text-muted-foreground">前保险杠进入停车线与桩杆线之间、速度不超过 0.03m/s 且制动力足以抵消坡道重力时，每个 100ms 步累计保持进度。连续 1 秒才发放停车过程奖励；松刹车、溜动或离开区域会立即清零。停稳后 30 秒内必须起步，后溜超过 30cm 或超时均为 −100。</p></div>
-                <div><h3 className="font-semibold">3. 其他过程奖励来自考试事件</h3><p className="mt-1 text-muted-foreground">倒车入库只在两个前轮触地点均越过控制线或整车合法入库时获得过程分；最终完整入库额外 +100 并结束。控制线可穿越且不会被雷达当成障碍。碰线或驶出考试区均为 −100，回合总时长超限为 −30。</p></div>
+                <div><h3 className="font-semibold">3. 通过奖励只对应真实完成</h3><p className="mt-1 text-muted-foreground">倒车入库不再要求先发现“过线—停车—换挡”流程。整车进入车库、姿态与速度合格且以倒车到达时，才获得目标分与额外 +100，并立即结束。碰线或驶出考试区均为 −100，回合总时长超限为 −30。</p></div>
                 <div><h3 className="font-semibold">4. 连续驾驶质量单独计分</h3><p className="mt-1 text-muted-foreground">逆着要求行驶、超过随目标距离收紧的安全速度、距离边线不足 0.60m、方向盘或踏板突变，都会产生连续惩罚。低速本身每步仅 −0.05；只有连续 12 秒没有让当前条件误差改善至少 0.05，才以 −35 结束。坡道合法停车区和完成停车后的起步窗口不受这条无进展规则影响。</p></div>
               </div>
               <div><div className="mb-2 text-[10px] font-semibold uppercase tracking-[.14em] text-muted-foreground">当前步逐项对账</div><dl className="space-y-1.5">{rewardRows.map(([label, key]) => <RewardRow key={key} label={label} value={snapshot?.rewardBreakdown[key] ?? 0} />)}<div className="mt-2 flex justify-between border-t pt-2 text-xs font-semibold"><dt>总奖励</dt><dd className="font-mono">{(snapshot?.rewardBreakdown.total ?? 0).toFixed(3)}</dd></div></dl></div>
