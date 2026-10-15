@@ -5,4 +5,4 @@
 - [x] RED/GREEN: rotation and single-subject runtime scopes preserve shared learning state.
 - [x] RED/GREEN: worker protocol and React hook expose scope changes.
 - [x] Add compact scope controls and update the learning explanation.
-- [ ] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
+- [x] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
