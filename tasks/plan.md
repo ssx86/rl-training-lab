@@ -1,15 +1,15 @@
-# Implementation Plan: Subject 2 convergence and termination repair
+# Implementation Plan: Subject 2 single-goal curriculum
 
 ## Dependency order
 
-1. Replace the two-second stationary failure with measured no-progress protection; rebalance terminal rewards and verify environment semantics.
-2. Add project/stage model context, motion-aware warm-up exploration, project-balanced replay, normalized process completion, and checkpoint v2.
-3. Add persistent termination telemetry and process-completion visualization without overlays.
+1. Replace reverse parking's four-stage sparse procedure with one feasible reverse goal and overlap-based dense shaping.
+2. Add persistent five-subject rotation and single-subject training scopes without resetting the shared model or replay.
+3. Add compact training-scope controls and update the teaching explanation.
 4. Run the full quality gates, release, deploy, and verify the real browser runtime.
 
 ## Verification checkpoints
 
-- Environment checkpoint: focused physics, termination, and reward tests pass.
-- Runtime checkpoint: observation, exploration, replay, telemetry, and storage tests pass.
-- UI checkpoint: component tests and browser inspection prove persistent evidence without an overlay.
+- Environment checkpoint: scenario, overlap geometry, dense reward, and termination tests pass.
+- Runtime checkpoint: rotation, single-subject persistence, protocol, and storage tests pass.
+- UI checkpoint: component tests and browser inspection prove both scopes are understandable and operable.
 - Release checkpoint: all tests, lint, build, CI, and public-browser checks pass.

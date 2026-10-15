@@ -1,10 +1,8 @@
-# Tasks: Subject 2 convergence and termination repair
+# Tasks: Subject 2 single-goal curriculum
 
-- [x] RED/GREEN: twelve-second no-progress watchdog replaces two-second stationary failure.
-- [x] RED/GREEN: rebalance terminal, inactivity, clearance, and process rewards.
-- [x] RED/GREEN: motion-aware warm-up exploration with shorter action holds.
-- [x] RED/GREEN: project and public stage are explicit model observations.
-- [x] RED/GREEN: balanced replay samples every populated project bucket.
-- [x] RED/GREEN: terminal-reason counters and normalized process completion persist in runtime/checkpoints.
-- [x] RED/GREEN: persistent diagnostics and process-completion curve render without overlays.
-- [x] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
+- [ ] RED/GREEN: one reverse-parking goal and feasible ready-to-reverse start.
+- [ ] RED/GREEN: exact body/bay overlap geometry and incremental dense reward.
+- [ ] RED/GREEN: rotation and single-subject runtime scopes preserve shared learning state.
+- [ ] RED/GREEN: worker protocol and React hook expose scope changes.
+- [ ] Add compact scope controls and update the learning explanation.
+- [ ] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
