@@ -1,10 +1,11 @@
-# Tasks: RL Field Guide Companion Refactor
+# Tasks: Subject 2 convergence and termination repair
 
-- [x] Write the companion architecture specification from the live guide curriculum and current lab source.
-- [x] RED: test the unified experiment catalog and its five-stage learning contract.
-- [x] GREEN: replace `lab-registry.ts` and active entries in `algorithm-catalog.ts` with the catalog.
-- [x] RED: test a generic replay buffer with scalar and object actions.
-- [x] GREEN: migrate DQN, TD3 fleet, and TD3 subject-2 runtimes; delete both old replay implementations.
-- [x] RED/GREEN: replace `AlgorithmLearningPanel` with a reusable prediction-to-transfer companion panel for all four experiments.
-- [x] Run import/dead-file audit; remove the superseded 2D driver view and its unused projection path.
-- [x] Run full tests, lint, Pages-compatible build, publish, and browser-verify every route.
+- [ ] RED/GREEN: twelve-second no-progress watchdog replaces two-second stationary failure.
+- [ ] RED/GREEN: rebalance terminal, inactivity, clearance, and process rewards.
+- [ ] RED/GREEN: motion-aware warm-up exploration with shorter action holds.
+- [ ] RED/GREEN: project and public stage are explicit model observations.
+- [ ] RED/GREEN: balanced replay samples every populated project bucket.
+- [ ] RED/GREEN: terminal-reason counters and normalized process completion persist in runtime/checkpoints.
+- [ ] RED/GREEN: persistent diagnostics and process-completion curve render without overlays.
+- [ ] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
+
