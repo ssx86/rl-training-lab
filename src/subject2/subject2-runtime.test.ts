@@ -171,4 +171,10 @@ describe("random-scene single-car TD3 runtime", () => {
     expect(restored.exportCheckpoint().agent.networks[0][0].values)
       .toEqual(checkpoint.agent.networks[0][0].values);
   });
+
+  it("rejects invalid training selection metadata at the checkpoint boundary", () => {
+    const runtime = new Subject2TrainingRuntime({ seed: 28 }); runtimes.push(runtime);
+    const checkpoint = runtime.exportCheckpoint();
+    expect(() => runtime.importCheckpoint({ ...checkpoint, selectedProject: "unknown" as never })).toThrow("训练范围不兼容");
+  });
 });

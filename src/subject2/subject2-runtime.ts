@@ -182,6 +182,7 @@ export class Subject2TrainingRuntime {
   }
 
   setTrainingSelection(scope: Subject2TrainingScope, project: Subject2Project): void {
+    if (scope !== "rotation" && scope !== "single") throw new RangeError("未知的科目二训练范围。");
     if (!SUBJECT2_PROJECT_ORDER.includes(project)) throw new RangeError("未知的科目二训练项目。");
     if (scope === this.trainingScope && project === this.selectedProject) return;
     this.trainingScope = scope;
@@ -196,6 +197,10 @@ export class Subject2TrainingRuntime {
     return this.mode === "training" ? trainingScenarioSeed(this.baseSeed, this.sceneGeneration) : evaluationScenarioSeed(this.baseSeed, this.sceneGeneration);
   }
 
+  private activeTrainingProject(): Subject2Project {
+    return this.trainingScope === "single" ? this.selectedProject : SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex];
+  }
+
   private advanceScenario(): void {
     this.sceneGeneration += 1;
     this.sceneChangedAtStep = this.stepCount;
@@ -204,9 +209,7 @@ export class Subject2TrainingRuntime {
     this.warmupAction = null;
     this.warmupActionStepsRemaining = 0;
     this.explorationState.fill(0);
-    const project = this.mode === "training"
-      ? this.trainingScope === "single" ? this.selectedProject : SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex]
-      : undefined;
+    const project = this.mode === "training" ? this.activeTrainingProject() : undefined;
     this.environment.reset(generateSubject2Scenario(this.nextSeed(), project));
   }
 
@@ -265,6 +268,11 @@ export class Subject2TrainingRuntime {
     if (checkpoint.version !== 2 || checkpoint.trainingProjectIndex < 0 || checkpoint.trainingProjectIndex >= SUBJECT2_PROJECT_ORDER.length) {
       throw new RangeError("科目二模型存档版本或项目位置不兼容。");
     }
+    const trainingScope = checkpoint.trainingScope ?? "rotation";
+    const selectedProject = checkpoint.selectedProject ?? SUBJECT2_PROJECT_ORDER[checkpoint.trainingProjectIndex];
+    if ((trainingScope !== "rotation" && trainingScope !== "single") || !SUBJECT2_PROJECT_ORDER.includes(selectedProject)) {
+      throw new RangeError("科目二模型存档的训练范围不兼容。");
+    }
     this.agent.importState(checkpoint.agent);
     this.mode = checkpoint.mode;
     this.stepCount = checkpoint.stepCount;
@@ -275,8 +283,8 @@ export class Subject2TrainingRuntime {
     this.sceneGeneration = checkpoint.sceneGeneration;
     this.sceneChangedAtStep = checkpoint.stepCount;
     this.trainingProjectIndex = checkpoint.trainingProjectIndex;
-    this.trainingScope = checkpoint.trainingScope ?? "rotation";
-    this.selectedProject = checkpoint.selectedProject ?? SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex];
+    this.trainingScope = trainingScope;
+    this.selectedProject = selectedProject;
     this.projectAttempts = checkpoint.projectAttempts;
     this.projectPasses = checkpoint.projectPasses;
     this.updates = checkpoint.updates;
@@ -294,9 +302,7 @@ export class Subject2TrainingRuntime {
     this.warmupAction = null;
     this.warmupActionStepsRemaining = 0;
     this.explorationState.fill(0);
-    const project = this.mode === "training"
-      ? this.trainingScope === "single" ? this.selectedProject : SUBJECT2_PROJECT_ORDER[this.trainingProjectIndex]
-      : undefined;
+    const project = this.mode === "training" ? this.activeTrainingProject() : undefined;
     this.environment.reset(generateSubject2Scenario(this.nextSeed(), project));
   }
 
