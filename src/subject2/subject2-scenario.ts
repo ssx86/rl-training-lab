@@ -80,7 +80,7 @@ function reverseParking(): Draft {
     seg("left-control-line", leftControlX, bayFrontY, leftControlX, laneBottomY, "exam-line"), seg("right-control-line", rightControlX, bayFrontY, rightControlX, laneBottomY, "exam-line"),
   ];
   return {
-    start: { x: rightControlX, y: stagingY, heading: 0 },
+    start: { x: rightControlX + .05, y: stagingY, heading: 0 },
     parkingBays: [{ id: "bay", label: "倒车库", x: bayCenterX, y: (bayFrontY + bayBackY) / 2, width: standard.bayWidth, length: standard.bayLength, heading: Math.PI / 2 }],
     checkpoints: [
       cp("parked", "reverse-parking", "完整倒入车库", bayCenterX, (bayFrontY + bayBackY) / 2, Math.PI / 2, "reverse", "从起倒位置自主倒入车库；距离、姿态和车身入库比例会连续评分，四个车角全部在线内才通过", { positionTolerance: .38, headingTolerance: .06, speedMax: .35, reward: 58, containmentBayId: "bay" }),

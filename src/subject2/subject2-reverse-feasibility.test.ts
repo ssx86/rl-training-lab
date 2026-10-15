@@ -34,14 +34,13 @@ describe("reverse parking geometric feasibility", () => {
   it("replays a continuous reverse path from the right control area into the bay without touching a line", () => {
     const scenario = generateSubject2Scenario(1, "reverse-parking");
     const bay = scenario.parkingBays[0];
-    const rightControl = scenario.checkpoints[0];
     const commands = [
       -1, -1, -1, -1, -1, -.5, 0, .5, .5, 1, -1, 1, 1, -1, -1, -1, .5, -1, .5, -1, .5, -1, .5, -1, .5, -1, .5, -1, .5, -1, .5, -1, .5,
       -1, -1, -1, -1, -.5, -.5, -1, -1, -1, -.5, -1, -.5, 0, -1, -1, -.5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       -1, -1, -1, -1, -1, -1, -.5, -.5, -1, -1, -1, -1, -1, -1, -1, -.5, -.5, 0, 0, 0, .5, .5, -1, 0, 0, -1, -1, -1, -.5, 0, .5, -1, -1, -.5, -1, -1,
     ] as const;
-    let vehicle = createSubject2Vehicle({ x: rightControl.x + .05, y: rightControl.y, heading: rightControl.heading });
+    let vehicle = createSubject2Vehicle(scenario.start);
 
     for (const [commandIndex, command] of commands.entries()) {
       const result = reverseCommand(vehicle, command);
