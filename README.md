@@ -96,4 +96,4 @@ src/exercise/update-q-value.ts
 
 TensorFlow.js 在独立 Worker 中执行 TD3 的 actor、双 critic 与 target 网络，并自动选择浏览器支持的最快后端；表格型 Q-learning 继续使用 `Float64Array`，便于逐项观察和调试。
 
-DQN、TD3 车队和 TD3 科目二共享 `src/rl/replay-buffer.ts`；TD3 的纯配置与参数说明独立于 TensorFlow.js 执行模块，使教学页面无需加载训练引擎即可展示准确的模型结构。
+DQN 与 TD3 车队共享 `src/rl/replay-buffer.ts`；科目二在同一经验结构外增加按科目均衡抽样的 `src/rl/stratified-replay-buffer.ts`。TD3 的纯配置与参数说明独立于 TensorFlow.js 执行模块，使教学页面无需加载训练引擎即可展示准确的模型结构。

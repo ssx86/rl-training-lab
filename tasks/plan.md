@@ -13,4 +13,3 @@
 - Runtime checkpoint: observation, exploration, replay, telemetry, and storage tests pass.
 - UI checkpoint: component tests and browser inspection prove persistent evidence without an overlay.
 - Release checkpoint: all tests, lint, build, CI, and public-browser checks pass.
-

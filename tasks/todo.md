@@ -8,4 +8,3 @@
 - [x] RED/GREEN: terminal-reason counters and normalized process completion persist in runtime/checkpoints.
 - [x] RED/GREEN: persistent diagnostics and process-completion curve render without overlays.
 - [ ] Verify full tests, lint, Pages build, release, deployment, and browser runtime.
-

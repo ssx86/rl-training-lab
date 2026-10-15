@@ -68,4 +68,3 @@ balanced replay.
 - Terminal rewards have a documented safe ordering and the UI plots normalized
   process completion from 0–100%.
 - Tests, lint, Pages build, deployment, and browser verification pass.
-
