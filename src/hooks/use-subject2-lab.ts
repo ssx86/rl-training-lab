@@ -80,7 +80,8 @@ export function useSubject2Lab() {
           const completionRate = completedAttempts === 0 ? 0 : Object.values(next.projectStats)
             .reduce((sum, stats) => sum + stats.processCompletionRate * stats.attempts, 0) / completedAttempts * 100;
           historyRef.current = [...historyRef.current, {
-            step: next.step, total: next.reward, progress: reward.poseProgress + reward.bayOverlapProgress + reward.stableHold,
+            step: next.step, total: next.reward, progress: reward.poseProgress + reward.bayApproachProgress
+              + reward.bayAlignmentProgress + reward.bayOverlapProgress + reward.stableHold,
             task: reward.checkpoint + reward.passBonus, penalties,
             throttle: next.vehicle.throttle, brake: next.vehicle.brake, stopped: Math.abs(next.vehicle.speed) < .08,
             completionRate,

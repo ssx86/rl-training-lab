@@ -39,12 +39,53 @@ describe("subject 2 explainable reward", () => {
   });
 
   it("rewards only incremental bay overlap instead of paying for standing still in the bay", () => {
-    const entering = calculateSubject2Reward({ ...base, previousBayOverlap: .1, nextBayOverlap: .35 });
-    const stationary = calculateSubject2Reward({ ...base, previousBayOverlap: .35, nextBayOverlap: .35 });
-    const leaving = calculateSubject2Reward({ ...base, previousBayOverlap: .35, nextBayOverlap: .1 });
+    const entering = calculateSubject2Reward({ ...base, useBayShaping: true, previousBayOverlap: .1, nextBayOverlap: .35 });
+    const stationary = calculateSubject2Reward({ ...base, useBayShaping: true, previousBayOverlap: .35, nextBayOverlap: .35 });
+    const leaving = calculateSubject2Reward({ ...base, useBayShaping: true, previousBayOverlap: .35, nextBayOverlap: .1 });
     expect(entering.bayOverlapProgress).toBeGreaterThan(0);
     expect(stationary.bayOverlapProgress).toBe(0);
     expect(leaving.bayOverlapProgress).toBeLessThan(0);
+  });
+
+  it("creates a visible hierarchy from approach to alignment to body overlap", () => {
+    const approach = calculateSubject2Reward({
+      ...base, useBayShaping: true,
+      previousError: { distance: 10, heading: .4, speed: .5 },
+      nextError: { distance: 9.9, heading: .4, speed: .5 },
+    });
+    const alignment = calculateSubject2Reward({
+      ...base, useBayShaping: true,
+      previousError: { distance: 10, heading: .4, speed: .5 },
+      nextError: { distance: 10, heading: .3, speed: .5 },
+    });
+    const firstPercentInside = calculateSubject2Reward({
+      ...base, useBayShaping: true, previousBayOverlap: 0, nextBayOverlap: .01,
+      nextError: base.previousError,
+    });
+
+    expect(approach.bayApproachProgress).toBeCloseTo(.09, 5);
+    expect(alignment.bayAlignmentProgress).toBeCloseTo(.035, 5);
+    expect(firstPercentInside.bayOverlapProgress).toBeCloseTo(.9, 5);
+    expect(firstPercentInside.bayOverlapProgress).toBeGreaterThan(approach.bayApproachProgress);
+    expect(approach.bayApproachProgress).toBeGreaterThan(alignment.bayAlignmentProgress);
+  });
+
+  it("uses reversible bay shaping and does not punish a temporary forward adjustment", () => {
+    const closer = calculateSubject2Reward({
+      ...base, useBayShaping: true, allowOppositeMotionAdjustment: true,
+      target: { ...target, motion: "reverse" }, speed: 1,
+      previousError: { distance: 10, heading: .4, speed: .5 },
+      nextError: { distance: 9.8, heading: .4, speed: .5 },
+    });
+    const farther = calculateSubject2Reward({
+      ...base, useBayShaping: true, allowOppositeMotionAdjustment: true,
+      target: { ...target, motion: "reverse" }, speed: 1,
+      previousError: { distance: 9.8, heading: .4, speed: .5 },
+      nextError: { distance: 10, heading: .4, speed: .5 },
+    });
+
+    expect(closer.bayApproachProgress).toBeCloseTo(-farther.bayApproachProgress, 5);
+    expect(closer.wrongDirection).toBe(0);
   });
 
   it("penalizes abrupt automatic-brake changes as part of control smoothness", () => {

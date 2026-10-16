@@ -16,7 +16,7 @@ interface Props {
 
 const DEFAULT_MODEL = describeTd3Config({ observationSize: 57, actionSize: 3, hiddenUnits: 128 });
 const rewardRows = [
-  ["姿态进步", "poseProgress"], ["车身入库进步", "bayOverlapProgress"], ["过程条件", "checkpoint"], ["全程通过", "passBonus"],
+  ["通用目标进步", "poseProgress"], ["接近车位", "bayApproachProgress"], ["姿态对正", "bayAlignmentProgress"], ["车身入库", "bayOverlapProgress"], ["过程条件", "checkpoint"], ["全程通过", "passBonus"],
   ["每步时间", "timeCost"], ["停滞", "inactivity"], ["方向错误", "wrongDirection"],
   ["超速", "unsafeSpeed"], ["控制突变", "controlSmoothness"], ["安全间距", "clearance"],
   ["稳定制动保持", "stableHold"], ["碰线", "collision"], ["驶出考试区", "outOfBounds"],
@@ -49,20 +49,20 @@ export function Subject2LearningPanel({ snapshot, history, backend }: Props) {
                 <CartesianGrid stroke="#dfe4e1" strokeDasharray="3 3" vertical={false} /><XAxis dataKey="step" tick={{ fontSize: 9 }} minTickGap={30} /><YAxis yAxisId="reward" tick={{ fontSize: 9 }} width={42} /><YAxis yAxisId="completion" orientation="right" domain={[0, 100]} tick={{ fontSize: 9 }} width={32} />
                 <Tooltip contentStyle={{ fontSize: 11, borderRadius: 6 }} labelFormatter={(step) => `step ${step}`} /><ReferenceLine yAxisId="reward" y={0} stroke="#8b9690" />
                 <Line yAxisId="reward" type="monotone" dataKey="total" name="总奖励" stroke="#a9630c" dot={false} strokeWidth={2} isAnimationActive={false} />
-                <Line yAxisId="reward" type="monotone" dataKey="progress" name="姿态进步" stroke="#2f7d55" dot={false} strokeWidth={1.5} isAnimationActive={false} />
+                <Line yAxisId="reward" type="monotone" dataKey="progress" name="连续进步" stroke="#2f7d55" dot={false} strokeWidth={1.5} isAnimationActive={false} />
                 <Line yAxisId="reward" type="monotone" dataKey="penalties" name="惩罚合计" stroke="#b84a3a" dot={false} strokeWidth={1.5} isAnimationActive={false} />
                 <Line yAxisId="completion" type="stepAfter" dataKey="completionRate" name="过程完成率 %" stroke="#2d65a8" dot={false} strokeWidth={2} isAnimationActive={false} />
               </LineChart></ResponsiveContainer> : <div className="grid h-full place-items-center text-center text-xs text-muted-foreground">开始训练后显示最近 180 个抽样步<br />橙：总奖励 · 绿：进步 · 红：惩罚</div>}
             </div>
-            <p className="mt-2 text-[10px] text-muted-foreground">蓝线：过程完成率（右轴 0–100%），按每次尝试完成的公开考试条件比例累计；它比只看总奖励更能判断是否真的学会。</p>
+            <p className="mt-2 text-[10px] text-muted-foreground">绿线汇总通用目标、接近车位、姿态对正、车身入库和稳定保持；蓝线是过程完成率（右轴 0–100%）。</p>
             <div className="mt-3 grid gap-px overflow-hidden rounded-control border bg-border sm:grid-cols-3 lg:grid-cols-6"><Stat label="当前步奖励" value={(snapshot?.reward ?? 0).toFixed(3)} /><Stat label="本回合累计" value={(snapshot?.episodeReward ?? 0).toFixed(1)} /><Stat label="曲线样本" value={`${history.length} / 180`} /><Stat label="近 60 步油门" value={`${controls.throttlePercent}%`} /><Stat label="近 60 步制动" value={`${controls.brakePercent}%`} /><Stat label="近 60 步静止" value={`${controls.stationaryPercent}%`} /></div>
           </TabsContent>
 
           <TabsContent value="reward">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
               <div className="space-y-4 text-xs leading-5">
-                <Formula>rₜ = r姿态进步 + r车身入库进步 + r稳定保持 + r过程条件 + r通过 − c时间 − c停滞 − c方向 − c速度 − c控制 − c贴边 − c终止</Formula>
-                <div><h3 className="font-semibold">1. 最终目标固定，改善才得分</h3><Formula>Φ(s) = exp(−(d目标 + 4|Δθ目标| + 0.8 max(0, |v|−v限)) / 12)</Formula><Formula>r姿态进步 = clip(12[Φ(sₜ₊₁) − Φ(sₜ)], −4, 4)</Formula><Formula>r车身入库进步 = clip(30[overlapₜ₊₁ − overlapₜ], −8, 8)</Formula><p className="mt-2 text-muted-foreground">倒车入库从合法起倒姿态开始，只有车库这一个目标。overlap 是车身矩形与车位矩形的真实相交面积占车身面积的比例；更近、方向更正、车身进入更多都会得到连续反馈，停在原处不会反复得分，也没有隐藏路线点。</p></div>
+                <Formula>rₜ = r通用目标 + r接近车位 + r姿态对正 + r车身入库 + r稳定保持 + r过程条件 + r通过 − c时间 − c停滞 − c方向 − c速度 − c控制 − c贴边 − c终止</Formula>
+                <div><h3 className="font-semibold">1. 车位目标采用由弱到强的连续梯度</h3><Formula>r接近车位 = clip(0.9 × [d前 − d后], −1.2, 1.2)</Formula><Formula>r姿态对正 = clip(0.35 × [|θ前| − |θ后|], −0.4, 0.4)</Formula><Formula>r车身入库 = clip(90 × [overlap后 − overlap前], −15, 15)</Formula><p className="mt-2 text-muted-foreground">倒车入库仍只有可见车库这一个目标，没有隐藏路线点。距离缩短先给小分，方向对正给更小的辅助分；车身哪怕只搭入 1%，也得到约 0.9 的明显反馈。三项都只奖励相邻状态的改善：原地不重复得分，退出或走远会把相应分数扣回。允许短暂前进调整，但最终仍必须倒车、低速且整车在线内。</p></div>
                 <div><h3 className="font-semibold">2. 坡停必须形成连续证据</h3><p className="mt-1 text-muted-foreground">前保险杠进入停车线与桩杆线之间、速度不超过 0.03m/s 且制动力足以抵消坡道重力时，每个 100ms 步累计保持进度。连续 1 秒才发放停车过程奖励；松刹车、溜动或离开区域会立即清零。停稳后 30 秒内必须起步，后溜超过 30cm 或超时均为 −100。</p></div>
                 <div><h3 className="font-semibold">3. 通过奖励只对应真实完成</h3><p className="mt-1 text-muted-foreground">倒车入库不再要求先发现“过线—停车—换挡”流程。整车进入车库、姿态与速度合格且以倒车到达时，才获得目标分与额外 +100，并立即结束。碰线或驶出考试区均为 −100，回合总时长超限为 −30。</p></div>
                 <div><h3 className="font-semibold">4. 连续驾驶质量单独计分</h3><p className="mt-1 text-muted-foreground">逆着要求行驶、超过随目标距离收紧的安全速度、距离边线不足 0.60m、方向盘或踏板突变，都会产生连续惩罚。低速本身每步仅 −0.05；只有连续 12 秒没有让当前条件误差改善至少 0.05，才以 −35 结束。坡道合法停车区和完成停车后的起步窗口不受这条无进展规则影响。</p></div>
@@ -78,7 +78,7 @@ export function Subject2LearningPanel({ snapshot, history, backend }: Props) {
                 <div className="grid gap-3 sm:grid-cols-2"><Theory title="57 维观测">32 束雷达 · 相对目标与车辆状态 · 5 类科目 one-hot · 4 阶段 one-hot</Theory><Theory title="自动挡动作">转向 · 互斥油门/制动轴 · D/N/R 挡位</Theory></div>
                 <div className="grid gap-3 sm:grid-cols-2"><Theory title="如何探索动作">aₜ = πθ(sₜ) + ε；未覆盖状态用 UCB 选择持续动作</Theory><Theory title="Critic 学习目标">y = r + γ(1−done) min(Q′₁, Q′₂)</Theory><Theory title="Critic 损失">L = Huber(Q − y)</Theory><Theory title="Actor 目标">最大化 E[Q₁(s, πθ(s))]</Theory></div>
                 <p className="border-l-2 border-primary pl-3 text-muted-foreground">双 Critic 取较小值，抑制价值高估；Actor 每 2 次 Critic 更新才更新一次；目标网络用 τ={model.tau} 缓慢追随，提升训练稳定性。</p>
-                <p className="border-l-2 border-[#2d65a8] pl-3 text-muted-foreground">训练时会按“静止且制动、静止已松刹、前进、倒车”统计覆盖次数，并用 UCB 优先尝试尚未充分覆盖的起步、制动或滑行选项。每个选项会持续 0.6–约 2.4 秒，让车辆真正完成松刹、起步或停车。UCB 只决定训练期探索哪个动作选项，不加入考试奖励；评估模式完全关闭探索。</p>
+                <p className="border-l-2 border-[#2d65a8] pl-3 text-muted-foreground">训练时会按“静止且制动、静止已松刹、前进、倒车”统计覆盖次数，并用 UCB 优先尝试尚未充分覆盖的起步、前进调整、制动或滑行选项。每个选项会持续 0.6–约 2.4 秒，让车辆真正完成松刹、起步、修正或停车。UCB 只决定训练期探索哪个动作选项，不加入考试奖励；评估模式完全关闭探索。</p>
               </div>
               <div className="space-y-3"><div className="grid grid-cols-2 gap-px overflow-hidden rounded-control border bg-border"><Stat label="Actor 参数" value={model.actorParameters.toLocaleString()} /><Stat label="单个 Critic" value={model.criticParametersEach.toLocaleString()} /><Stat label="在线可训练" value={model.onlineTrainableParameters.toLocaleString()} /><Stat label="含目标网络" value={model.totalParameters.toLocaleString()} /></div>
                 <div className="border p-3"><div className="flex items-center justify-between gap-2"><span className="text-xs font-semibold">浏览器推理</span><Badge className={hasHeadroom ? "bg-[#e8f3ec] text-success" : "bg-[#fff1ee] text-danger"}>{hasHeadroom ? "余量充足" : "需要关注"}</Badge></div><dl className="mt-3 space-y-2 text-xs"><Info label="后端" value={backend} /><Info label="单次 Actor" value={latency ? `${latency.toFixed(2)} ms` : "启动后测量"} /><Info label="估算吞吐" value={inferenceRate ? `${Math.round(inferenceRate).toLocaleString()} 次/秒` : "等待"} /><Info label="物理控制频率" value="10 次/秒" /></dl></div>

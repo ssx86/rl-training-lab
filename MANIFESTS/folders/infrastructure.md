@@ -1,4 +1,9 @@
-# qlearning/ 基础设施（.github · docs · scripts · skills · tasks，7 文件）
+# qlearning/ 基础设施（.github · .goal · .done · docs · scripts · skills · tasks）
+
+### .goal/ 与 .done/
+- 职责: `.goal/` 只保存仍在实施的实时方案并用 frontmatter 标记状态；完成后移动到 `.done/` 归档。
+- 关键: 开发 todo 以 `.goal/` 为准，`docs/` 仅保留持久参考材料；归档文件保留最终验收证据与发布结果。
+- 坑/价值: 禁止已完成方案滞留 `.goal/`，也禁止从过时 `docs/` 恢复已经变更的开发待办。
 
 ### .github/workflows/pages.yml
 - 职责: GitHub Actions CI/CD——lint/test/audit/build 后部署 Pages（push master 或手动）。

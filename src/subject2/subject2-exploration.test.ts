@@ -37,11 +37,29 @@ describe("subject 2 coverage-guided temporal exploration", () => {
     const vehicle = createSubject2Vehicle({ x: 10, y: 10, heading: 0, speed: 0, brake: 1, isBrakeHolding: true });
     const counts = {
       [explorationCoverageKey("reverse-parking", vehicle, "drive")]: 20,
+      [explorationCoverageKey("reverse-parking", vehicle, "adjust")]: 20,
       [explorationCoverageKey("reverse-parking", vehicle, "brake")]: 20,
       [explorationCoverageKey("reverse-parking", vehicle, "coast")]: 0,
     };
 
     expect(chooseSubject2ExplorationOption(counts, "reverse-parking", vehicle, middleRandom)).toBe("coast");
+  });
+
+  it("covers a sustained forward adjustment separately in parking projects", () => {
+    const vehicle = createSubject2Vehicle({ x: 10, y: 10, heading: 0, brake: 1, isBrakeHolding: true });
+    const counts = {
+      [explorationCoverageKey("reverse-parking", vehicle, "drive")]: 20,
+      [explorationCoverageKey("reverse-parking", vehicle, "brake")]: 20,
+      [explorationCoverageKey("reverse-parking", vehicle, "coast")]: 20,
+      [explorationCoverageKey("reverse-parking", vehicle, "adjust")]: 0,
+    };
+    const kind = chooseSubject2ExplorationOption(counts, "reverse-parking", vehicle, middleRandom);
+    const option = planSubject2ExplorationOption(kind, vehicle, -1, middleRandom);
+
+    expect(kind).toBe("adjust");
+    expect(option.action.gear).toBe(1);
+    expect(option.action.throttle).toBeGreaterThan(0);
+    expect(option.durationSteps).toBeGreaterThanOrEqual(8);
   });
 
   it("keeps a post-warmup rescue chance when the policy is stationary", () => {

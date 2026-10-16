@@ -16,6 +16,10 @@ describe("Subject2LearningPanel diagnostics", () => {
     expect(screen.getByText(/0–100%/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("tab", { name: "奖励公式" }));
     expect(screen.getByText(/12 秒无进展/)).toBeInTheDocument();
+    expect(screen.getByText(/0.9.*d前.*d后/)).toBeInTheDocument();
+    expect(screen.getByText(/90.*overlap后.*overlap前/)).toBeInTheDocument();
+    expect(screen.getByText("接近车位")).toBeInTheDocument();
+    expect(screen.getByText("姿态对正")).toBeInTheDocument();
   });
 
   it("explains coverage-guided temporal options without presenting them as exam reward", async () => {

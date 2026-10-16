@@ -188,6 +188,7 @@ export class Subject2Environment {
       throttleChange: this.vehicle.throttle - previousThrottle,
       brakeChange: this.vehicle.brake - previousBrake,
       minimumClearance, checkpointReached, isFinalCheckpoint, shapePoseProgress: true,
+      useBayShaping: Boolean(targetBay), allowOppositeMotionAdjustment: Boolean(targetBay),
       previousBayOverlap, nextBayOverlap,
       collided, outOfBounds, rollbackExceeded, requiredHold: stationaryAllowed,
       validHoldStep, startTimedOut, stalled, timedOut,

@@ -93,9 +93,29 @@ describe("random subject 2 environment", () => {
 
   it("rewards reverse progress toward the visible parking goal", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
-    const result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: -1 });
+    let result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: -1 });
+    let cumulativeReward = result.reward;
+    for (let step = 1; step < 10; step += 1) {
+      result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: -1 });
+      cumulativeReward += result.reward;
+    }
     expect(result.checkpointIndex).toBe(0);
-    expect(result.rewardBreakdown.poseProgress).toBeGreaterThan(0);
+    expect(result.rewardBreakdown.bayApproachProgress).toBeGreaterThan(0);
+    expect(result.rewardBreakdown.bayOverlapProgress).toBe(0);
+    expect(result.reward).toBeGreaterThan(0);
+    expect(cumulativeReward).toBeGreaterThan(0);
+  });
+
+  it("permits a forward parking adjustment without treating it as final reverse completion", () => {
+    const scenario = generateSubject2Scenario(11, "reverse-parking");
+    const environment = new Subject2Environment(scenario);
+    const bay = scenario.parkingBays[0];
+    environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x, y: bay.y, heading: bay.heading, speed: .1, gear: 1 }));
+    const result = environment.step({ steer: 0, throttle: .1, brake: 0, gear: 1 });
+
+    expect(result.rewardBreakdown.wrongDirection).toBe(0);
+    expect(result.checkpointReached).toBe(false);
+    expect(result.passed).toBe(false);
   });
 
   it("fails the ramp start once gravity causes more than 30 cm of rollback", () => {

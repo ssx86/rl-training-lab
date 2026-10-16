@@ -8,6 +8,8 @@ export interface RewardPoseError {
 
 export interface Subject2RewardBreakdown {
   readonly poseProgress: number;
+  readonly bayApproachProgress: number;
+  readonly bayAlignmentProgress: number;
   readonly bayOverlapProgress: number;
   readonly checkpoint: number;
   readonly passBonus: number;
@@ -39,6 +41,8 @@ export interface Subject2RewardContext {
   readonly checkpointReached: boolean;
   readonly isFinalCheckpoint: boolean;
   readonly shapePoseProgress?: boolean;
+  readonly useBayShaping?: boolean;
+  readonly allowOppositeMotionAdjustment?: boolean;
   readonly previousBayOverlap?: number;
   readonly nextBayOverlap?: number;
   readonly collided: boolean;
@@ -60,16 +64,24 @@ export function posePotential(error: RewardPoseError, speedLimit: number): numbe
 
 export function calculateSubject2Reward(context: Subject2RewardContext): Subject2RewardBreakdown {
   const speedLimit = context.target.speedMax ?? .8;
-  const poseProgress = context.shapePoseProgress === false ? 0 : clamp(12 * (posePotential(context.nextError, speedLimit)
+  const poseProgress = context.shapePoseProgress === false || context.useBayShaping ? 0 : clamp(12 * (posePotential(context.nextError, speedLimit)
     - posePotential(context.previousError, speedLimit)), -4, 4);
-  const bayOverlapProgress = clamp(30 * ((context.nextBayOverlap ?? 0) - (context.previousBayOverlap ?? 0)), -8, 8);
-  const wrongWay = (context.target.motion === "forward" && context.speed < -.05)
-    || (context.target.motion === "reverse" && context.speed > .05);
+  const bayApproachProgress = context.useBayShaping
+    ? clamp(.9 * (context.previousError.distance - context.nextError.distance), -1.2, 1.2)
+    : 0;
+  const bayAlignmentProgress = context.useBayShaping
+    ? clamp(.35 * (Math.abs(context.previousError.heading) - Math.abs(context.nextError.heading)), -.4, .4)
+    : 0;
+  const bayOverlapProgress = clamp(90 * ((context.nextBayOverlap ?? 0) - (context.previousBayOverlap ?? 0)), -15, 15);
+  const wrongWay = !context.allowOppositeMotionAdjustment && ((context.target.motion === "forward" && context.speed < -.05)
+    || (context.target.motion === "reverse" && context.speed > .05));
   const safeSpeed = speedLimit + Math.min(2.2, context.nextError.distance * .28);
   const speedExcess = Math.max(0, Math.abs(context.speed) - safeSpeed);
   const clearanceDeficit = Math.max(0, .6 - context.minimumClearance);
   const parts = {
     poseProgress,
+    bayApproachProgress,
+    bayAlignmentProgress,
     bayOverlapProgress,
     checkpoint: context.checkpointReached ? context.target.reward : 0,
     passBonus: context.checkpointReached && context.isFinalCheckpoint ? 100 : 0,

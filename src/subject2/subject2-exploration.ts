@@ -1,7 +1,7 @@
 import type { Subject2Project } from "./subject2-course";
 import { SUBJECT2_VEHICLE, type Subject2Action, type Subject2VehicleState } from "./subject2-vehicle";
 
-export type Subject2ExplorationOptionKind = "drive" | "brake" | "coast";
+export type Subject2ExplorationOptionKind = "drive" | "adjust" | "brake" | "coast";
 export type Subject2ExplorationMotionBand = "stopped-braked" | "stopped-free" | "moving-forward" | "moving-reverse";
 
 export interface Subject2ExplorationOption {
@@ -10,7 +10,8 @@ export interface Subject2ExplorationOption {
   readonly durationSteps: number;
 }
 
-const OPTION_KINDS: readonly Subject2ExplorationOptionKind[] = ["drive", "brake", "coast"];
+const BASE_OPTION_KINDS: readonly Subject2ExplorationOptionKind[] = ["drive", "brake", "coast"];
+const PARKING_OPTION_KINDS: readonly Subject2ExplorationOptionKind[] = ["drive", "adjust", "brake", "coast"];
 
 export function subject2ExplorationMotionBand(vehicle: Subject2VehicleState): Subject2ExplorationMotionBand {
   if (Math.abs(vehicle.speed) < .08) return vehicle.brake > .08 || vehicle.isBrakeHolding ? "stopped-braked" : "stopped-free";
@@ -41,13 +42,14 @@ export function chooseSubject2ExplorationOption(
   vehicle: Subject2VehicleState,
   random: () => number,
 ): Subject2ExplorationOptionKind {
-  const visits = OPTION_KINDS.map((kind) => Math.max(0, counts[explorationCoverageKey(project, vehicle, kind)] ?? 0));
+  const optionKinds = project === "reverse-parking" || project === "side-parking" ? PARKING_OPTION_KINDS : BASE_OPTION_KINDS;
+  const visits = optionKinds.map((kind) => Math.max(0, counts[explorationCoverageKey(project, vehicle, kind)] ?? 0));
   const totalVisits = visits.reduce((sum, count) => sum + count, 0);
-  return OPTION_KINDS.reduce((best, kind, index) => {
-    const bonus = Math.sqrt(2 * Math.log(totalVisits + OPTION_KINDS.length + 1) / (visits[index] + 1));
+  return optionKinds.reduce((best, kind, index) => {
+    const bonus = Math.sqrt(2 * Math.log(totalVisits + optionKinds.length + 1) / (visits[index] + 1));
     const score = bonus + random() * 1e-4;
     return score > best.score ? { kind, score } : best;
-  }, { kind: OPTION_KINDS[0], score: Number.NEGATIVE_INFINITY }).kind;
+  }, { kind: optionKinds[0], score: Number.NEGATIVE_INFINITY }).kind;
 }
 
 const clampSteps = (value: number, minimum: number, maximum: number) => Math.max(minimum, Math.min(maximum, Math.ceil(value)));
@@ -78,7 +80,7 @@ export function planSubject2ExplorationOption(
   const steer = broadTurn ? (random() * 2 - 1) * .75 : (random() + random() - 1) * .28;
   return {
     kind,
-    action: { steer, throttle: .65 + random() * .25, brake: 0, gear: intendedGear },
+    action: { steer, throttle: .65 + random() * .25, brake: 0, gear: kind === "adjust" ? -intendedGear : intendedGear },
     // One second covers full brake release, throttle build-up, and measurable motion.
     durationSteps: Math.round(1 / SUBJECT2_VEHICLE.timeStep),
   };
