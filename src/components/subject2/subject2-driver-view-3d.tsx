@@ -152,7 +152,7 @@ export function Subject2DriverView3D({ scenario, vehicle, observation }: Props) 
       <div ref={hostRef} className="aspect-video w-full" />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-2.5 text-white">
         <div className="bg-[#101b17]/85 px-2.5 py-2"><div className="text-[10px] font-semibold">驾驶员主视角</div><div className="mt-1 font-mono text-lg text-[#ffc56a]">{Math.abs(vehicle.speed * 3.6).toFixed(1)} km/h</div></div>
-        <div className="bg-[#101b17]/85 px-2.5 py-2 text-right text-[10px]"><div>{vehicle.gear < 0 ? "R" : vehicle.gear > 0 ? "D" : "N"} 挡 · 最近障碍 {nearest.toFixed(1)}m</div><div className="mt-1 text-[#dce8e2]">油门 {Math.round(vehicle.throttle * 100)}% · 制动 {Math.round(vehicle.brake * 100)}%</div></div>
+        <div className="bg-[#101b17]/85 px-2.5 py-2 text-right text-[10px]"><div>{vehicle.driveDirection < 0 ? "R" : vehicle.driveDirection > 0 ? "D" : "N"} 挡 · 最近障碍 {nearest.toFixed(1)}m</div><div className="mt-1 text-[#dce8e2]">纵向指令 {Math.round(vehicle.longitudinalIntent * 100)}% · {vehicle.isBrakeHolding ? "制动保持" : "自由滚动"}</div></div>
       </div>
       <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#101b17]/75 px-2 py-1 font-mono text-[8px] text-white">CAMERA · 30 FPS · 真实米制场地</div>
     </div>

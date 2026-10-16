@@ -12,10 +12,8 @@ describe("random-scene single-car TD3 runtime", () => {
     const second = await runtime.step();
     expect(second.replaySize).toBe(2);
     expect(second.action.steer).toBeGreaterThanOrEqual(-1);
-    expect(second.action.throttle).toBeLessThanOrEqual(1);
-    expect(second.action.brake).toBeGreaterThanOrEqual(0);
-    expect(second.action.gear).toBeGreaterThanOrEqual(-1);
-    expect(second.action.throttle * second.action.brake!).toBe(0);
+    expect(second.action.longitudinal).toBeGreaterThanOrEqual(-1);
+    expect(second.action.longitudinal).toBeLessThanOrEqual(1);
   });
 
   it("keeps one coverage option coherent for its full physical transition", async () => {
@@ -30,7 +28,7 @@ describe("random-scene single-car TD3 runtime", () => {
     }
     await runtime.step();
     expect(Object.values(runtime.exportCheckpoint().explorationOptionCounts ?? {}).reduce((sum, count) => sum + count, 0)).toBe(2);
-    expect(first.action.throttle * first.action.brake!).toBe(0);
+    expect(Math.abs(first.action.longitudinal)).toBeLessThanOrEqual(1);
   });
 
   it("covers sustained drive and sustained braking instead of relying on isolated random pedal samples", async () => {
@@ -43,12 +41,12 @@ describe("random-scene single-car TD3 runtime", () => {
         : { current: 0, maximum: state.maximum },
       { current: 0, maximum: 0 },
     ).maximum;
-    expect(longestRun((action) => action.throttle >= .65)).toBeGreaterThanOrEqual(8);
-    expect(longestRun((action) => (action.brake ?? 0) >= .9)).toBeGreaterThanOrEqual(8);
+    expect(longestRun((action) => Math.abs(action.longitudinal) >= .65)).toBeGreaterThanOrEqual(8);
+    expect(longestRun((action) => Math.abs(action.longitudinal) >= .9)).toBeGreaterThanOrEqual(8);
   });
 
   it("uses correlated exploration so a small opposite innovation does not flip the pedal axis", () => {
-    const next = nextSubject2ExplorationNoise([0, .4, 0], [0, -.05, 0], .85);
+    const next = nextSubject2ExplorationNoise([0, .4], [0, -.05], .85);
     expect(next[1]).toBeGreaterThan(0);
     expect(next[1]).toBeLessThan(.4);
   });
@@ -56,7 +54,7 @@ describe("random-scene single-car TD3 runtime", () => {
   it("reports the exact model and measured inference latency", async () => {
     const runtime = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 3 }); runtimes.push(runtime);
     const snapshot = await runtime.step();
-    expect(snapshot.modelInfo).toMatchObject({ algorithm: "TD3", observationSize: 57, actionSize: 3, actorParameters: 24_323, onlineTrainableParameters: 73_221 });
+    expect(snapshot.modelInfo).toMatchObject({ algorithm: "TD3", observationSize: 57, actionSize: 2, actorParameters: 24_194, onlineTrainableParameters: 72_836 });
     expect(snapshot.inferenceMs).toBeGreaterThanOrEqual(0);
     expect(Number.isFinite(snapshot.inferenceMs)).toBe(true);
   });
@@ -168,7 +166,7 @@ describe("random-scene single-car TD3 runtime", () => {
     await source.step();
     await source.step();
     const checkpoint = source.exportCheckpoint();
-    expect(checkpoint.version).toBe(2);
+    expect(checkpoint.version).toBe(3);
     expect(checkpoint.trainingScope).toBe("rotation");
     expect(Object.values(checkpoint.explorationOptionCounts ?? {}).reduce((sum, count) => sum + count, 0)).toBeGreaterThan(0);
     const restored = new Subject2TrainingRuntime({ warmupSteps: 100, seed: 27 }); runtimes.push(restored);

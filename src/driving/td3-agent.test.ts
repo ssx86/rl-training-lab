@@ -33,17 +33,15 @@ describe("Td3Agent", () => {
     });
   });
 
-  it("supports the three-output automatic-transmission control contract used by subject 2", () => {
+  it("supports the two-output signed-speed control contract used by subject 2", () => {
     const agent = new Td3Agent({ observationSize: 48, actionSize: SUBJECT2_ACTION_SIZE }, SUBJECT2_ACTION_CODEC); agents.push(agent);
     const action = agent.selectAction(Array(48).fill(0));
-    expect(agent.describe().actionSize).toBe(3);
+    expect(agent.describe().actionSize).toBe(2);
     expect(action).toEqual(expect.objectContaining({
-      steer: expect.any(Number), throttle: expect.any(Number), brake: expect.any(Number),
-      gear: expect.any(Number),
+      steer: expect.any(Number), longitudinal: expect.any(Number),
     }));
-    expect(action.throttle).toBeGreaterThanOrEqual(0);
-    expect(action.brake).toBeGreaterThanOrEqual(0);
-    expect(action.throttle * action.brake!).toBe(0);
+    expect(action.longitudinal).toBeGreaterThanOrEqual(-1);
+    expect(action.longitudinal).toBeLessThanOrEqual(1);
   });
 
   it("updates twin critics every batch and delays actor updates", async () => {

@@ -13,9 +13,8 @@ export function interpolateSubject2Vehicle(from: Subject2VehicleState, to: Subje
     heading: normalizeAngle(from.heading + normalizeAngle(to.heading - from.heading) * t),
     speed: mix(from.speed, to.speed, t),
     steer: mix(from.steer, to.steer, t),
-    throttle: mix(from.throttle, to.throttle, t),
-    brake: mix(from.brake, to.brake, t),
-    gear: t < .5 ? from.gear : to.gear,
+    longitudinalIntent: mix(from.longitudinalIntent, to.longitudinalIntent, t),
+    driveDirection: t < .5 ? from.driveDirection : to.driveDirection,
     acceleration: mix(from.acceleration, to.acceleration, t),
     isBrakeHolding: t < .5 ? from.isBrakeHolding : to.isBrakeHolding,
   };

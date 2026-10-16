@@ -5,9 +5,13 @@
 - 关键: 开发 todo 以 `.goal/` 为准，`docs/` 仅保留持久参考材料；归档文件保留最终验收证据与发布结果。
 - 坑/价值: 禁止已完成方案滞留 `.goal/`，也禁止从过时 `docs/` 恢复已经变更的开发待办。
 
-### .goal/2026-10-16-subject2-vehicle-control-v3.md
-- 职责: 科目二车辆参数、前轮转向运动学与 TD3 双参数动作接口的待批准原型和验收标准。
-- 关键: 标注 `status: awaiting_approval`；明确三维动作到二维动作会触发 checkpoint v3，旧 v2 权重保留但不能无损迁移。
+### .done/2026-10-16-subject2-vehicle-control-v3.md
+- 职责: 已完成的科目二车辆参数、后轴自行车运动学、TD3 双参数动作接口和 checkpoint v3 验收记录。
+- 关键: 标注 `status: complete`；旧 v2 权重保留但不能无损迁移，生产积分器回放验证整车可倒入标准库位。
+
+### .goal/2026-10-16-lab-interface-consolidation.md
+- 职责: 三个保留实验的统一观察工作台原型，以及 TD3 城市出租车实验的完整退役边界。
+- 关键: 标注 `status: awaiting_approval`；先以科目二验证单主画布和长期曲线，再扩展 Q-learning/DQN，最后清零出租车模块引用。
 
 ### .github/workflows/pages.yml
 - 职责: GitHub Actions CI/CD——lint/test/audit/build 后部署 Pages（push master 或手动）。

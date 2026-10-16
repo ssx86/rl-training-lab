@@ -8,7 +8,7 @@ const base = {
   target,
   speed: 1,
   steerChange: .1,
-  throttleChange: .1,
+  longitudinalChange: .1,
   minimumClearance: 1.8,
   checkpointReached: false,
   isFinalCheckpoint: false,
@@ -89,8 +89,8 @@ describe("subject 2 explainable reward", () => {
   });
 
   it("penalizes abrupt automatic-brake changes as part of control smoothness", () => {
-    const smooth = calculateSubject2Reward({ ...base, steerChange: 0, throttleChange: 0, brakeChange: 0 });
-    const abruptBrake = calculateSubject2Reward({ ...base, steerChange: 0, throttleChange: 0, brakeChange: 1 });
+    const smooth = calculateSubject2Reward({ ...base, steerChange: 0, longitudinalChange: 0 });
+    const abruptBrake = calculateSubject2Reward({ ...base, steerChange: 0, longitudinalChange: 1 });
     expect(abruptBrake.controlSmoothness).toBeLessThan(smooth.controlSmoothness);
   });
 

@@ -2,7 +2,7 @@ import type { Subject2Project } from "./subject2-course";
 import { SUBJECT2_VEHICLE, type Subject2Action, type Subject2VehicleState } from "./subject2-vehicle";
 
 export type Subject2ExplorationOptionKind = "drive" | "adjust" | "brake" | "coast";
-export type Subject2ExplorationMotionBand = "stopped-braked" | "stopped-free" | "moving-forward" | "moving-reverse";
+export type Subject2ExplorationMotionBand = "stopped-held" | "stopped-free" | "moving-forward" | "moving-reverse";
 
 export interface Subject2ExplorationOption {
   readonly kind: Subject2ExplorationOptionKind;
@@ -14,7 +14,7 @@ const BASE_OPTION_KINDS: readonly Subject2ExplorationOptionKind[] = ["drive", "b
 const PARKING_OPTION_KINDS: readonly Subject2ExplorationOptionKind[] = ["drive", "adjust", "brake", "coast"];
 
 export function subject2ExplorationMotionBand(vehicle: Subject2VehicleState): Subject2ExplorationMotionBand {
-  if (Math.abs(vehicle.speed) < .08) return vehicle.brake > .08 || vehicle.isBrakeHolding ? "stopped-braked" : "stopped-free";
+  if (Math.abs(vehicle.speed) < .08) return vehicle.isBrakeHolding ? "stopped-held" : "stopped-free";
   return vehicle.speed > 0 ? "moving-forward" : "moving-reverse";
 }
 
@@ -60,19 +60,20 @@ export function planSubject2ExplorationOption(
   requiredMotion: -1 | 0 | 1,
   random: () => number,
 ): Subject2ExplorationOption {
-  const intendedGear: -1 | 1 = requiredMotion === -1 ? -1 : 1;
+  const intendedDirection: -1 | 1 = requiredMotion === -1 ? -1 : 1;
   if (kind === "brake") {
     const durationSeconds = Math.abs(vehicle.speed) / SUBJECT2_VEHICLE.serviceBrakeDeceleration + .5;
+    const motionDirection = vehicle.speed < -.01 ? -1 : vehicle.speed > .01 ? 1 : vehicle.driveDirection || intendedDirection;
     return {
       kind,
-      action: { steer: vehicle.steer * .5, throttle: 0, brake: 1, gear: vehicle.gear || intendedGear },
+      action: { steer: vehicle.steer * .5, longitudinal: -motionDirection },
       durationSteps: clampSteps(durationSeconds / SUBJECT2_VEHICLE.timeStep, 12, 24),
     };
   }
   if (kind === "coast") {
     return {
       kind,
-      action: { steer: vehicle.steer * .7, throttle: 0, brake: 0, gear: Math.abs(vehicle.speed) < .15 ? intendedGear : vehicle.gear },
+      action: { steer: vehicle.steer * .7, longitudinal: 0 },
       durationSteps: Math.round(.6 / SUBJECT2_VEHICLE.timeStep),
     };
   }
@@ -80,7 +81,7 @@ export function planSubject2ExplorationOption(
   const steer = broadTurn ? (random() * 2 - 1) * .75 : (random() + random() - 1) * .28;
   return {
     kind,
-    action: { steer, throttle: .65 + random() * .25, brake: 0, gear: kind === "adjust" ? -intendedGear : intendedGear },
+    action: { steer, longitudinal: (kind === "adjust" ? -intendedDirection : intendedDirection) * (.65 + random() * .25) },
     // One second covers full brake release, throttle build-up, and measurable motion.
     durationSteps: Math.round(1 / SUBJECT2_VEHICLE.timeStep),
   };

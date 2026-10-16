@@ -20,7 +20,8 @@ export interface Subject2Observation {
   readonly localPhaseProgress: number;
   readonly stopLineDistance: number;
   readonly grade: number;
-  readonly brake: number;
+  readonly longitudinalIntent: number;
+  readonly isBrakeHolding: boolean;
   readonly longitudinalAcceleration: number;
   readonly holdProgress: number;
   readonly rampPhase: RampTrainingPhase;
@@ -79,7 +80,7 @@ export class Subject2Environment {
   private checkpointIndex = 0;
   private stepCount = 0;
   private lastMotion: -1 | 0 | 1 = 0;
-  private previousThrottle = 0;
+  private previousLongitudinal = 0;
   private rampStartOrigin: { readonly x: number; readonly y: number } | null = null;
   private rampPhase: RampTrainingPhase;
   private rampHoldSteps = 0;
@@ -102,7 +103,7 @@ export class Subject2Environment {
     this.checkpointIndex = 0;
     this.stepCount = 0;
     this.lastMotion = 0;
-    this.previousThrottle = 0;
+    this.previousLongitudinal = 0;
     this.rampStartOrigin = null;
     this.rampPhase = scenario.project === "ramp" ? "approach" : null;
     this.rampHoldSteps = 0;
@@ -121,13 +122,12 @@ export class Subject2Environment {
     const targetBay = processTarget.containmentBayId ? this.scenario.parkingBays.find((item) => item.id === processTarget.containmentBayId) : undefined;
     const previousBayOverlap = targetBay ? vehicleBayOverlapRatio(this.vehicle, targetBay) : 0;
     const previousSteer = this.vehicle.steer;
-    const previousThrottle = this.previousThrottle;
-    const previousBrake = this.vehicle.brake;
+    const previousLongitudinal = this.previousLongitudinal;
     const physics = this.scenario.project === "ramp"
       ? { grade: SUBJECT2_STANDARD.ramp.grade, uphillHeading: -Math.PI / 2 }
       : undefined;
     this.vehicle = advanceSubject2Vehicle(this.vehicle, action, physics);
-    this.previousThrottle = this.vehicle.throttle;
+    this.previousLongitudinal = this.vehicle.longitudinalIntent;
     if (this.vehicle.speed > .05) this.lastMotion = 1;
     else if (this.vehicle.speed < -.05) this.lastMotion = -1;
     this.stepCount += 1;
@@ -156,7 +156,7 @@ export class Subject2Environment {
         this.rampHoldSteps += 1;
       } else {
         this.rampHoldSteps = 0;
-        this.rampPhase = this.vehicle.brake > .02 || stopGeometry.stopLineDistance <= 5 ? "braking" : "approach";
+        this.rampPhase = this.vehicle.isBrakeHolding || stopGeometry.stopLineDistance <= 5 ? "braking" : "approach";
       }
     }
     const requiredHoldSteps = Math.round(SUBJECT2_STANDARD.ramp.holdDurationSeconds / SUBJECT2_VEHICLE.timeStep);
@@ -185,8 +185,7 @@ export class Subject2Environment {
     const rewardBreakdown = calculateSubject2Reward({
       previousError, nextError, target: processTarget, speed: this.vehicle.speed,
       steerChange: this.vehicle.steer - previousSteer,
-      throttleChange: this.vehicle.throttle - previousThrottle,
-      brakeChange: this.vehicle.brake - previousBrake,
+      longitudinalChange: this.vehicle.longitudinalIntent - previousLongitudinal,
       minimumClearance, checkpointReached, isFinalCheckpoint, shapePoseProgress: true,
       useBayShaping: Boolean(targetBay), allowOppositeMotionAdjustment: Boolean(targetBay),
       previousBayOverlap, nextBayOverlap,
@@ -230,7 +229,7 @@ export class Subject2Environment {
       Math.min(1, targetDistance / Math.hypot(this.scenario.width, this.scenario.height)),
       Math.sin(targetBearing), Math.cos(targetBearing), Math.sin(targetHeadingError), Math.cos(targetHeadingError),
       this.vehicle.speed / SUBJECT2_VEHICLE.maxForwardSpeed, localPhaseProgress, this.vehicle.steer, targetMotion,
-      this.vehicle.throttle, this.vehicle.brake, this.vehicle.gear,
+      this.vehicle.longitudinalIntent, this.vehicle.driveDirection, this.vehicle.isBrakeHolding ? 1 : 0,
       Math.max(-1, Math.min(1, this.vehicle.acceleration / SUBJECT2_VEHICLE.serviceBrakeDeceleration)),
       Math.max(-1, Math.min(1, stopLineDistance / 20)), grade / .1, holdProgress,
       ...projectEncoding, ...processStageEncoding,
@@ -238,7 +237,8 @@ export class Subject2Environment {
     if (vector.length !== SUBJECT2_OBSERVATION_SIZE) throw new Error("Subject 2 observation shape changed unexpectedly.");
     return {
       vector, scan, targetDistance, targetBearing, targetHeadingError, targetMotion, localPhaseProgress,
-      stopLineDistance, grade, brake: this.vehicle.brake, longitudinalAcceleration: this.vehicle.acceleration,
+      stopLineDistance, grade, longitudinalIntent: this.vehicle.longitudinalIntent,
+      isBrakeHolding: this.vehicle.isBrakeHolding, longitudinalAcceleration: this.vehicle.acceleration,
       holdProgress, rampPhase: this.rampPhase,
       projectEncoding, processStageEncoding,
     };

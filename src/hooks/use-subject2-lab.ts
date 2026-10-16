@@ -50,7 +50,7 @@ export function useSubject2Lab() {
     : { available: false, savedAt: null, step: 0, updates: 0, reason: null });
   const [restorePromptOpen, setRestorePromptOpen] = useState(Boolean(initialCheckpoint));
   const [checkpointError, setCheckpointError] = useState<string | null>(() => !initialCheckpoint && hasLegacySubject2Checkpoint()
-    ? "检测到旧版 48 维模型。新版模型加入了科目与流程阶段，旧权重无法安全恢复，请重新训练。"
+    ? "检测到旧版三轴控制模型。新版改为转向与纵向两轴控制，旧权重形状不兼容，请重新训练。"
     : null);
 
   useEffect(() => {
@@ -83,7 +83,9 @@ export function useSubject2Lab() {
             step: next.step, total: next.reward, progress: reward.poseProgress + reward.bayApproachProgress
               + reward.bayAlignmentProgress + reward.bayOverlapProgress + reward.stableHold,
             task: reward.checkpoint + reward.passBonus, penalties,
-            throttle: next.vehicle.throttle, brake: next.vehicle.brake, stopped: Math.abs(next.vehicle.speed) < .08,
+            throttle: isDrivingIntent(next.vehicle) ? Math.abs(next.vehicle.longitudinalIntent) : 0,
+            brake: isBrakingIntent(next.vehicle) ? Math.abs(next.vehicle.longitudinalIntent) : 0,
+            stopped: Math.abs(next.vehicle.speed) < .08,
             completionRate,
           }].slice(-180);
           lastHistoryStepRef.current = next.step;
@@ -165,4 +167,16 @@ export function useSubject2Lab() {
     snapshot, rewardHistory, mode, trainingScope, selectedProject, speed, status, error, metrics, checkpointInfo, checkpointError, restorePromptOpen,
     setMode, setSpeed, setTrainingSelection, start, pause, saveCheckpoint, restoreCheckpoint, dismissRestorePrompt,
   };
+}
+
+function isBrakingIntent(vehicle: Subject2VehicleState): boolean {
+  const motion = Math.abs(vehicle.speed) > .01 ? Math.sign(vehicle.speed) : vehicle.driveDirection;
+  return vehicle.isBrakeHolding || (motion !== 0 && Math.abs(vehicle.longitudinalIntent) > .04
+    && Math.sign(vehicle.longitudinalIntent) !== motion);
+}
+
+function isDrivingIntent(vehicle: Subject2VehicleState): boolean {
+  if (isBrakingIntent(vehicle) || Math.abs(vehicle.longitudinalIntent) <= .04) return false;
+  const motion = Math.abs(vehicle.speed) > .01 ? Math.sign(vehicle.speed) : vehicle.driveDirection;
+  return motion === 0 || Math.sign(vehicle.longitudinalIntent) === motion;
 }

@@ -10,10 +10,12 @@ const heldRampVehicle = (scenario: ReturnType<typeof generateSubject2Scenario>) 
   x: scenario.checkpoints[0].x,
   y: scenario.checkpoints[0].y,
   heading: scenario.checkpoints[0].heading,
-  brake: .2,
+  longitudinalIntent: -.2,
+  driveDirection: 1,
+  isBrakeHolding: true,
 });
 
-const holdAction = { steer: 0, throttle: 0, brake: .2, gear: 1 } as const;
+const holdAction = { steer: 0, longitudinal: -.2 } as const;
 
 describe("random subject 2 environment", () => {
   it("exposes the reverse-parking bay as its only target", () => {
@@ -31,7 +33,7 @@ describe("random subject 2 environment", () => {
     const environment = new Subject2Environment(scenario);
     const bay = scenario.parkingBays[0];
     environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x + .1, y: bay.y + .2, heading: bay.heading, speed: -.1 }));
-    const result = environment.step({ steer: 0, throttle: 0, gear: -1 });
+    const result = environment.step({ steer: 0, longitudinal: 0 });
     expect(result.checkpointReached).toBe(true);
     expect(Number.isFinite(result.rewardBreakdown.poseProgress)).toBe(true);
     expect(result.rewardBreakdown.checkpoint).toBeGreaterThan(0);
@@ -48,9 +50,9 @@ describe("random subject 2 environment", () => {
       y: bay.y + bay.length / 2 + SUBJECT2_VEHICLE.length / 2 - .6,
       heading: bay.heading,
       speed: -.5,
-      gear: -1,
+      driveDirection: -1,
     }));
-    const result = environment.step({ steer: 0, throttle: .4, brake: 0, gear: -1 });
+    const result = environment.step({ steer: 0, longitudinal: -.4 });
     expect(result.checkpointReached).toBe(false);
     expect(result.rewardBreakdown.bayOverlapProgress).toBeGreaterThan(0);
   });
@@ -63,17 +65,17 @@ describe("random subject 2 environment", () => {
 
   it("penalizes waiting so zero action cannot become the solution", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "ramp"));
-    const result = environment.step({ steer: 0, throttle: 0 });
+    const result = environment.step({ steer: 0, longitudinal: 0 });
     expect(result.rewardBreakdown.inactivity).toBeLessThan(0);
     expect(result.reward).toBeLessThan(0);
   });
 
   it("does not restart after only two seconds of stationary exploration", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
-    let result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
+    let result = environment.step({ steer: 0, longitudinal: 0 });
     const oldStopLimitSteps = 2 / SUBJECT2_VEHICLE.timeStep;
     for (let index = 1; index < oldStopLimitSteps; index += 1) {
-      result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
+      result = environment.step({ steer: 0, longitudinal: 0 });
     }
     expect(result.done).toBe(false);
     expect(result.terminalReason).toBe(null);
@@ -81,10 +83,10 @@ describe("random subject 2 environment", () => {
 
   it("ends an attempt after twelve seconds without measurable process progress", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
-    let result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
+    let result = environment.step({ steer: 0, longitudinal: 0 });
     const noProgressLimitSteps = SUBJECT2_STANDARD.training.noProgressLimitSeconds / SUBJECT2_VEHICLE.timeStep;
     for (let index = 1; index < noProgressLimitSteps && !result.done; index += 1) {
-      result = environment.step({ steer: 0, throttle: 0, brake: 1, gear: 1 });
+      result = environment.step({ steer: 0, longitudinal: 0 });
     }
     expect(result.done).toBe(true);
     expect(result.terminalReason).toBe("stalled");
@@ -93,10 +95,10 @@ describe("random subject 2 environment", () => {
 
   it("rewards reverse progress toward the visible parking goal", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(11, "reverse-parking"));
-    let result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: -1 });
+    let result = environment.step({ steer: 0, longitudinal: -1 });
     let cumulativeReward = result.reward;
     for (let step = 1; step < 10; step += 1) {
-      result = environment.step({ steer: 0, throttle: 1, brake: 0, gear: -1 });
+      result = environment.step({ steer: 0, longitudinal: -1 });
       cumulativeReward += result.reward;
     }
     expect(result.checkpointIndex).toBe(0);
@@ -110,8 +112,8 @@ describe("random subject 2 environment", () => {
     const scenario = generateSubject2Scenario(11, "reverse-parking");
     const environment = new Subject2Environment(scenario);
     const bay = scenario.parkingBays[0];
-    environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x, y: bay.y, heading: bay.heading, speed: .1, gear: 1 }));
-    const result = environment.step({ steer: 0, throttle: .1, brake: 0, gear: 1 });
+    environment.setVehicleForTest(createSubject2Vehicle({ x: bay.x, y: bay.y, heading: bay.heading, speed: .1, driveDirection: 1 }));
+    const result = environment.step({ steer: 0, longitudinal: .1 });
 
     expect(result.rewardBreakdown.wrongDirection).toBe(0);
     expect(result.checkpointReached).toBe(false);
@@ -127,7 +129,7 @@ describe("random subject 2 environment", () => {
     expect(stopped.checkpointReached).toBe(true);
 
     let result = stopped;
-    for (let index = 0; index < 20 && !result.done; index += 1) result = environment.step({ steer: 0, throttle: 0 });
+    for (let index = 0; index < 20 && !result.done; index += 1) result = environment.step({ steer: 0, longitudinal: 0 });
     expect(result.done).toBe(true);
     expect(result.passed).toBe(false);
     expect(result.terminalReason).toBe("rollback");
@@ -138,7 +140,7 @@ describe("random subject 2 environment", () => {
     const scenario = generateSubject2Scenario(18, "ramp");
     const environment = new Subject2Environment(scenario);
     const stopLine = scenario.segments.find((segment) => segment.id === "stop-line")!;
-    environment.setVehicleForTest(createSubject2Vehicle({ x: scenario.checkpoints[0].x, y: stopLine.ay, heading: -Math.PI / 2, brake: .2 }));
+    environment.setVehicleForTest(createSubject2Vehicle({ x: scenario.checkpoints[0].x, y: stopLine.ay, heading: -Math.PI / 2, driveDirection: 1, isBrakeHolding: true }));
     const centerOnLine = environment.step(holdAction);
     expect(centerOnLine.checkpointReached).toBe(false);
     expect(centerOnLine.observation.holdProgress).toBe(0);
@@ -160,7 +162,7 @@ describe("random subject 2 environment", () => {
     const environment = new Subject2Environment(scenario);
     environment.setVehicleForTest(heldRampVehicle(scenario));
     for (let index = 0; index < 5; index += 1) environment.step(holdAction);
-    const interrupted = environment.step({ ...holdAction, brake: 0 });
+    const interrupted = environment.step({ steer: 0, longitudinal: 1 });
     expect(interrupted.checkpointReached).toBe(false);
     expect(interrupted.observation.holdProgress).toBe(0);
     expect(interrupted.observation.rampPhase).toBe("braking");
@@ -200,7 +202,7 @@ describe("random subject 2 environment", () => {
     const environment = new Subject2Environment(scenario);
     const line = scenario.segments.find((item) => item.kind === "curb")!;
     environment.setVehicleForTest(createSubject2Vehicle({ x: (line.ax + line.bx) / 2, y: (line.ay + line.by) / 2, heading: 0, speed: 1 }));
-    const result = environment.step({ steer: 0, throttle: 0 });
+    const result = environment.step({ steer: 0, longitudinal: 0 });
     expect(result.done).toBe(true);
     expect(result.terminalReason).toBe("collision");
     expect(result.rewardBreakdown.collision).toBe(-100);
@@ -212,7 +214,7 @@ describe("random subject 2 environment", () => {
     const target = { ...base.checkpoints[0], x: (line.ax + line.bx) / 2, y: (line.ay + line.by) / 2, heading: 0, motion: "any" as const, positionTolerance: 1, speedMax: 1 };
     const environment = new Subject2Environment({ ...base, checkpoints: [target] });
     environment.setVehicleForTest(createSubject2Vehicle({ x: target.x, y: target.y, heading: 0 }));
-    const result = environment.step({ steer: 0, throttle: 0 });
+    const result = environment.step({ steer: 0, longitudinal: 0 });
     expect(result.checkpointReached).toBe(false);
     expect(result.passed).toBe(false);
     expect(result.rewardBreakdown.checkpoint).toBe(0);
@@ -234,8 +236,8 @@ describe("random subject 2 environment", () => {
 
   it("ends an attempt on timeout so the runtime can restart the same full scene", () => {
     const environment = new Subject2Environment(generateSubject2Scenario(14), 2);
-    environment.step({ steer: 0, throttle: 0 });
-    const result = environment.step({ steer: 0, throttle: 0 });
+    environment.step({ steer: 0, longitudinal: 0 });
+    const result = environment.step({ steer: 0, longitudinal: 0 });
     expect(result.done).toBe(true);
     expect(result.terminalReason).toBe("timeout");
     expect(result.rewardBreakdown.timeout).toBe(-30);
@@ -249,7 +251,7 @@ describe("random subject 2 environment", () => {
       .find((candidate) => !collidesWithCourse(candidate, scenario.segments) && !isVehicleWithinRoadSurfaces(candidate, scenario.roadSurfaces));
     expect(vehicle).toBeDefined();
     environment.setVehicleForTest(vehicle!);
-    const result = environment.step({ steer: 0, throttle: .5 });
+    const result = environment.step({ steer: 0, longitudinal: .5 });
     expect(result.done).toBe(true);
     expect(result.passed).toBe(false);
     expect(result.terminalReason).toBe("out-of-bounds");
@@ -263,7 +265,7 @@ describe("random subject 2 environment", () => {
       scenario.checkpoints.forEach((target, index) => {
         const speed = target.motion === "reverse" ? -.1 : target.motion === "forward" ? .1 : 0;
         environment.setVehicleForTest(createSubject2Vehicle({ x: target.x, y: target.y, heading: target.heading, speed }));
-        const result = environment.step({ steer: 0, throttle: 0 });
+        const result = environment.step({ steer: 0, longitudinal: 0 });
         expect(result.checkpointReached, `${project}/${target.id}`).toBe(true);
         expect(result.rewardBreakdown.checkpoint, `${project}/${target.id}`).toBeGreaterThan(0);
         expect(result.done, `${project}/${target.id}`).toBe(index === scenario.checkpoints.length - 1);
@@ -278,7 +280,8 @@ describe("random subject 2 environment", () => {
     environment.setVehicleForTest(heldRampVehicle(scenario));
     const result = environment.step(holdAction);
     expect(result.observation.grade).toBe(SUBJECT2_STANDARD.ramp.grade);
-    expect(result.observation.brake).toBeCloseTo(.2);
+    expect(result.observation.longitudinalIntent).toBeCloseTo(-.2);
+    expect(result.observation.isBrakeHolding).toBe(true);
     expect(result.observation.longitudinalAcceleration).toBeCloseTo(0);
     expect(result.observation.stopLineDistance).toBeGreaterThanOrEqual(-SUBJECT2_STANDARD.ramp.poleLineDistance);
     expect(result.observation.stopLineDistance).toBeLessThanOrEqual(0);
@@ -300,7 +303,7 @@ describe("random subject 2 environment", () => {
       environment.setVehicleForTest(createSubject2Vehicle({
         x: target.x, y: target.y, heading: target.heading, speed: isExit ? 2 : target.motion === "reverse" ? -.1 : .1,
       }));
-      const result = environment.step({ steer: 0, throttle: isExit ? .5 : 0 });
+      const result = environment.step({ steer: 0, longitudinal: isExit ? .5 : 0 });
       if (isExit) {
         expect(result.checkpointReached, `${project}/${target.id}`).toBe(true);
         expect(result.passed, `${project}/${target.id}`).toBe(true);

@@ -43,7 +43,7 @@ export function Subject2Lab() {
       <section className="border-b bg-card">
         <div className="mx-auto flex max-w-[1680px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div><h2 className="text-base font-semibold tracking-tight">中国科目二 · 固定标准训练场</h2><p className="mt-1 text-xs text-muted-foreground">一辆训练车 · 五项共用同一模型与 Replay · 可轮换或单项专训 · 连续控制</p></div>
-          <div className="flex flex-wrap items-center gap-2"><Badge className="bg-accent text-[#9a5505]"><Target size={14} />只显示最终目标</Badge><Badge className="font-mono text-muted-foreground">自动挡 · Actor 57→128→128→3</Badge></div>
+          <div className="flex flex-wrap items-center gap-2"><Badge className="bg-accent text-[#9a5505]"><Target size={14} />只显示最终目标</Badge><Badge className="font-mono text-muted-foreground">自动挡 · Actor 57→128→128→2</Badge></div>
         </div>
       </section>
 
@@ -74,9 +74,9 @@ export function Subject2Lab() {
               <Metric label="目标方位" value={`${targetDegrees >= 0 ? "右" : "左"} ${Math.abs(targetDegrees).toFixed(0)}°`} />
               <Metric label="车速" value={`${vehicle.speed.toFixed(1)} m/s`} />
               <Metric label="方向盘 · 实际 / 指令" value={`${Math.round(vehicle.steer * 100)} / ${Math.round((snapshot?.action.steer ?? 0) * 100)}%`} />
-              <Metric label="油门 · 实际 / 指令" value={`${Math.round(vehicle.throttle * 100)} / ${Math.round((snapshot?.action.throttle ?? 0) * 100)}%`} />
-              <Metric label="制动 · 实际 / 指令" value={`${Math.round(vehicle.brake * 100)} / ${Math.round((snapshot?.action.brake ?? 0) * 100)}%`} />
-              <Metric label="挡位 / 纵向加速度" value={`${gearLabel(vehicle.gear)} / ${vehicle.acceleration.toFixed(2)} m/s²`} />
+              <Metric label="纵向指令 · 前进+/倒车−" value={`${Math.round(vehicle.longitudinalIntent * 100)} / ${Math.round((snapshot?.action.longitudinal ?? 0) * 100)}%`} />
+              <Metric label="制动状态" value={vehicle.isBrakeHolding ? "保持" : "未保持"} />
+              <Metric label="行驶方向 / 纵向加速度" value={`${gearLabel(vehicle.driveDirection)} / ${vehicle.acceleration.toFixed(2)} m/s²`} />
               <Metric label="目标动作" value={observation.targetMotion < 0 ? "倒车" : observation.targetMotion > 0 ? "前进" : "停稳"} />
               <Metric label="坡停阶段 / 保持" value={`${rampPhaseLabel(observation.rampPhase)} / ${Math.round(observation.holdProgress * 100)}%`} />
               <Metric label="当前奖励" value={(snapshot?.reward ?? 0).toFixed(3)} />

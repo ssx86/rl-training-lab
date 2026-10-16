@@ -1,44 +1,80 @@
 import { describe, expect, it } from "vitest";
-import { advanceSubject2Vehicle, createSubject2Vehicle, minimumServiceBrakeForStaticHold, SUBJECT2_ACTION_CODEC, SUBJECT2_ACTION_SIZE, SUBJECT2_VEHICLE } from "./subject2-vehicle";
+import {
+  advanceSubject2Vehicle,
+  createSubject2Vehicle,
+  minimumServiceBrakeForStaticHold,
+  subject2RearAxlePoint,
+  SUBJECT2_ACTION_CODEC,
+  SUBJECT2_ACTION_SIZE,
+  SUBJECT2_VEHICLE,
+} from "./subject2-vehicle";
 
-describe("subject 2 continuous vehicle", () => {
-  it("decodes one signed longitudinal axis into mutually exclusive automatic pedals", () => {
-    expect(SUBJECT2_ACTION_SIZE).toBe(3);
-    expect(SUBJECT2_ACTION_CODEC.decode([-1, .7, -1])).toEqual({ steer: -1, throttle: .7, brake: 0, gear: -1 });
-    expect(SUBJECT2_ACTION_CODEC.decode([1, -.6, 1])).toEqual({ steer: 1, throttle: 0, brake: .6, gear: 1 });
-    expect(SUBJECT2_ACTION_CODEC.decode([0, 0, 0])).toEqual({ steer: 0, throttle: 0, brake: 0, gear: 0 });
-    expect(SUBJECT2_ACTION_CODEC.encode({ steer: 1, throttle: 0, brake: .6, gear: 1 })).toEqual([1, -.6, 1]);
+describe("subject 2 dual-axis vehicle", () => {
+  it("decodes only steering and signed longitudinal intent", () => {
+    expect(SUBJECT2_ACTION_SIZE).toBe(2);
+    expect(SUBJECT2_ACTION_CODEC.decode([-1, .7])).toEqual({ steer: -1, longitudinal: .7 });
+    expect(SUBJECT2_ACTION_CODEC.decode([1, -.6])).toEqual({ steer: 1, longitudinal: -.6 });
+    expect(SUBJECT2_ACTION_CODEC.encode({ steer: .25, longitudinal: -.4 })).toEqual([.25, -.4]);
   });
-  it("uses a reverse gear with positive throttle instead of overloading the brake axis", () => {
+
+  it("chooses reverse directly from rest without a gear action", () => {
     let vehicle = createSubject2Vehicle({ x: 20, y: 20, heading: 0 });
-    for (let index = 0; index < 20; index += 1) {
-      vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, throttle: 1, gear: -1 });
-    }
+    for (let index = 0; index < 20; index += 1) vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: -1 });
     expect(vehicle.speed).toBeLessThan(0);
     expect(vehicle.x).toBeLessThan(20);
+    expect(vehicle.driveDirection).toBe(-1);
   });
 
-  it("clamps out-of-range commands before rate-limited application", () => {
-    const vehicle = advanceSubject2Vehicle(createSubject2Vehicle({ x: 0, y: 0, heading: 0 }), { steer: 5, throttle: 5, brake: 5 });
-    expect(vehicle.steer).toBeCloseTo(.4, 6);
-    expect(vehicle.throttle).toBe(0);
-    expect(vehicle.brake).toBeCloseTo(.5, 6);
-  });
-
-  it("lets a coasting car settle at zero without oscillating across drive directions", () => {
-    const vehicle = advanceSubject2Vehicle(createSubject2Vehicle({ x: 0, y: 0, heading: 0, speed: -.01 }), { steer: 0, throttle: 0 });
+  it("brakes to zero without crossing into the opposite direction", () => {
+    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: 0, speed: 1.2, driveDirection: 1 });
+    for (let index = 0; index < 20; index += 1) {
+      vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: -1 });
+      expect(vehicle.speed).toBeGreaterThanOrEqual(0);
+    }
     expect(vehicle.speed).toBe(0);
+    expect(vehicle.isBrakeHolding).toBe(true);
+    expect(vehicle.driveDirection).toBe(1);
   });
 
-  it("uses real metre dimensions and a low-speed bicycle turning radius", () => {
+  it("requires a released longitudinal command before selecting the opposite direction", () => {
+    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: 0, speed: .2, driveDirection: 1 });
+    for (let index = 0; index < 8; index += 1) vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: -1 });
+    expect(vehicle.speed).toBe(0);
+    vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: -1 });
+    expect(vehicle.speed).toBe(0);
+    vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: 0 });
+    expect(vehicle.driveDirection).toBe(0);
+    vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: -1 });
+    expect(vehicle.speed).toBeLessThan(0);
+  });
+
+  it("uses one consistent New Santana geometry", () => {
     expect(SUBJECT2_VEHICLE.length).toBe(4.473);
     expect(SUBJECT2_VEHICLE.width).toBe(1.706);
-    expect(SUBJECT2_VEHICLE.wheelBase).toBe(2.548);
-    const minimumRadius = SUBJECT2_VEHICLE.wheelBase / Math.tan(SUBJECT2_VEHICLE.maxSteerRadians);
-    expect(minimumRadius).toBeGreaterThan(3.8);
-    expect(minimumRadius).toBeLessThan(4);
-    expect(SUBJECT2_VEHICLE.maxForwardSpeed * 3.6).toBe(14.4);
-    expect(Math.abs(SUBJECT2_VEHICLE.maxReverseSpeed) * 3.6).toBe(9);
+    expect(SUBJECT2_VEHICLE.wheelBase).toBe(2.603);
+    expect(SUBJECT2_VEHICLE.frontOverhang + SUBJECT2_VEHICLE.wheelBase + SUBJECT2_VEHICLE.rearOverhang)
+      .toBeCloseTo(SUBJECT2_VEHICLE.length, 6);
+  });
+
+  it("measures a full-lock outer-front-wheel turning diameter near 10.7 metres", () => {
+    const rearRadius = SUBJECT2_VEHICLE.wheelBase / Math.tan(SUBJECT2_VEHICLE.maxSteerRadians);
+    const outerFrontRadius = Math.hypot(rearRadius + SUBJECT2_VEHICLE.frontTrackWidth / 2, SUBJECT2_VEHICLE.wheelBase);
+    expect(outerFrontRadius * 2).toBeCloseTo(10.7, 1);
+  });
+
+  it("integrates the rear axle then reconstructs the body centre", () => {
+    const initial = createSubject2Vehicle({ x: 10, y: 10, heading: 0, speed: 1, steer: 1, driveDirection: 1 });
+    const rearBefore = subject2RearAxlePoint(initial);
+    const next = advanceSubject2Vehicle(initial, { steer: 1, longitudinal: 1 });
+    const rearAfter = subject2RearAxlePoint(next);
+    expect(Math.hypot(rearAfter.x - rearBefore.x, rearAfter.y - rearBefore.y)).toBeGreaterThan(0);
+    expect(next.y).not.toBe(10);
+  });
+
+  it("clamps commands and rate-limits steering", () => {
+    const vehicle = advanceSubject2Vehicle(createSubject2Vehicle({ x: 0, y: 0, heading: 0 }), { steer: 5, longitudinal: 5 });
+    expect(vehicle.steer).toBeCloseTo(.4, 6);
+    expect(vehicle.longitudinalIntent).toBe(1);
   });
 
   it("exposes the calibrated static brake threshold for a ten-percent hill", () => {
@@ -46,77 +82,22 @@ describe("subject 2 continuous vehicle", () => {
     expect(minimumServiceBrakeForStaticHold(0)).toBe(0);
   });
 
-  it("integrates continuous actions at a 100 ms physics step in metres", () => {
-    const initial = createSubject2Vehicle({ x: 0, y: 0, heading: 0, speed: 2 });
-    const next = advanceSubject2Vehicle(initial, { steer: 0, throttle: 0 });
-    expect(next.x).toBeCloseTo(.19775, 5);
-    expect(next.y).toBeCloseTo(0, 6);
-    expect(next.speed).toBeCloseTo(1.955, 6);
-  });
-
-  it("rate-limits pedal travel so a full command produces smooth acceleration", () => {
-    const initial = createSubject2Vehicle({ x: 0, y: 0, heading: 0 });
-    const first = advanceSubject2Vehicle(initial, { steer: 0, throttle: 1 });
-    const second = advanceSubject2Vehicle(first, { steer: 0, throttle: 1 });
-
-    expect(first.throttle).toBeCloseTo(.3, 6);
-    expect(second.throttle).toBeCloseTo(.6, 6);
-    expect(first.speed).toBeGreaterThan(0);
-    expect(second.speed).toBeGreaterThan(first.speed);
-    expect(first.x).toBeCloseTo(first.speed * SUBJECT2_VEHICLE.timeStep / 2, 6);
-  });
-
-  it("never overlaps the actual throttle and brake while switching pedals", () => {
-    const initial = createSubject2Vehicle({ x: 0, y: 0, heading: 0, speed: 1, throttle: 1 });
-    let next = advanceSubject2Vehicle(initial, { steer: 0, throttle: 0, brake: 1 });
-    expect(next.throttle).toBeCloseTo(.7, 6);
-    expect(next.brake).toBe(0);
-    for (let index = 0; index < 8; index += 1) {
-      next = advanceSubject2Vehicle(next, { steer: 0, throttle: 0, brake: 1 });
-      expect(next.throttle * next.brake).toBe(0);
-    }
-    expect(next.throttle).toBe(0);
-    expect(next.brake).toBeGreaterThan(0);
-  });
-
-  it("brakes a moving car to a zero-speed lock without reversing it", () => {
-    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: 0, speed: 1.2 });
-    for (let index = 0; index < 20; index += 1) vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, throttle: 0, brake: 1 });
-    expect(vehicle.speed).toBe(0);
-    expect(vehicle.isBrakeHolding).toBe(true);
-  });
-
-  it("holds a stopped car on a ten-percent grade with enough service brake", () => {
-    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: -Math.PI / 2 });
-    for (let index = 0; index < 30; index += 1) {
-      vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, throttle: 0, brake: .2 }, { grade: .1, uphillHeading: -Math.PI / 2 });
+  it("holds while the brake command remains pressed and rolls when released on a grade", () => {
+    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: -Math.PI / 2, speed: .4, driveDirection: 1 });
+    for (let index = 0; index < 20; index += 1) {
+      vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: -1 }, { grade: .1, uphillHeading: -Math.PI / 2 });
     }
     expect(vehicle.speed).toBe(0);
     expect(vehicle.isBrakeHolding).toBe(true);
-  });
-
-  it("still rolls backward when the available brake force is below the grade force", () => {
-    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: -Math.PI / 2 });
-    for (let index = 0; index < 30; index += 1) {
-      vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, throttle: 0, brake: .03 }, { grade: .1, uphillHeading: -Math.PI / 2 });
-    }
+    vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, longitudinal: 0 }, { grade: .1, uphillHeading: -Math.PI / 2 });
     expect(vehicle.speed).toBeLessThan(0);
     expect(vehicle.isBrakeHolding).toBe(false);
   });
 
-  it("rolls backward under gravity on a ten-percent uphill grade", () => {
+  it("still rolls backward from an unheld stop on a ten-percent uphill grade", () => {
     const initial = createSubject2Vehicle({ x: 0, y: 0, heading: -Math.PI / 2 });
-    const next = advanceSubject2Vehicle(initial, { steer: 0, throttle: 0 }, { grade: .1, uphillHeading: -Math.PI / 2 });
+    const next = advanceSubject2Vehicle(initial, { steer: 0, longitudinal: 0 }, { grade: .1, uphillHeading: -Math.PI / 2 });
     expect(next.speed).toBeLessThan(0);
     expect(next.y).toBeGreaterThan(0);
-  });
-
-  it("can overcome a ten-percent grade with sufficient forward throttle", () => {
-    let vehicle = createSubject2Vehicle({ x: 0, y: 0, heading: -Math.PI / 2 });
-    for (let index = 0; index < 10; index += 1) {
-      vehicle = advanceSubject2Vehicle(vehicle, { steer: 0, throttle: 1 }, { grade: .1, uphillHeading: -Math.PI / 2 });
-    }
-    expect(vehicle.speed).toBeGreaterThan(0);
-    expect(vehicle.y).toBeLessThan(0);
   });
 });

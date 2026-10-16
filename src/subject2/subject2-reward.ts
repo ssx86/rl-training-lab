@@ -35,8 +35,7 @@ export interface Subject2RewardContext {
   readonly target: { readonly motion: RequiredMotion; readonly reward: number; readonly speedMax?: number };
   readonly speed: number;
   readonly steerChange: number;
-  readonly throttleChange: number;
-  readonly brakeChange?: number;
+  readonly longitudinalChange: number;
   readonly minimumClearance: number;
   readonly checkpointReached: boolean;
   readonly isFinalCheckpoint: boolean;
@@ -89,7 +88,7 @@ export function calculateSubject2Reward(context: Subject2RewardContext): Subject
     inactivity: Math.abs(context.speed) < .08 && !context.requiredHold ? -.05 : 0,
     wrongDirection: wrongWay ? -.3 - .1 * Math.abs(context.speed) : 0,
     unsafeSpeed: -.12 * speedExcess ** 2,
-    controlSmoothness: -.04 * (context.steerChange ** 2 + .5 * context.throttleChange ** 2 + .5 * (context.brakeChange ?? 0) ** 2),
+    controlSmoothness: -.04 * (context.steerChange ** 2 + context.longitudinalChange ** 2),
     clearance: clearanceDeficit > 0 ? -1.2 * clearanceDeficit ** 2 : 0,
     collision: context.collided ? -100 : 0,
     outOfBounds: context.outOfBounds ? -100 : 0,

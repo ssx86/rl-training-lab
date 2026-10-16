@@ -7,18 +7,15 @@ export interface Subject2VehicleState {
   readonly heading: number;
   readonly speed: number;
   readonly steer: number;
-  readonly throttle: number;
-  readonly brake: number;
-  readonly gear: -1 | 0 | 1;
+  readonly longitudinalIntent: number;
+  readonly driveDirection: -1 | 0 | 1;
   readonly acceleration: number;
   readonly isBrakeHolding: boolean;
 }
 
 export interface Subject2Action {
   readonly steer: number;
-  readonly throttle: number;
-  readonly brake?: number;
-  readonly gear?: number;
+  readonly longitudinal: number;
 }
 
 export interface Subject2PhysicsContext {
@@ -28,44 +25,42 @@ export interface Subject2PhysicsContext {
   readonly uphillHeading?: number;
 }
 
-export const SUBJECT2_ACTION_SIZE = 3;
+export const SUBJECT2_ACTION_SIZE = 2;
 const finite = (value: number | undefined, fallback = 0) => Number.isFinite(value) ? value! : fallback;
 const clampBipolar = (value: number | undefined) => Math.max(-1, Math.min(1, finite(value)));
-const clampUnit = (value: number | undefined, fallback = 0) => Math.max(0, Math.min(1, finite(value, fallback)));
 
 export const SUBJECT2_ACTION_CODEC: Td3ActionCodec<Subject2Action> = {
   size: SUBJECT2_ACTION_SIZE,
-  decode: (values) => {
-    const longitudinal = clampBipolar(values[1]);
-    return {
-      steer: clampBipolar(values[0]),
-      throttle: Math.max(0, longitudinal),
-      brake: Math.max(0, -longitudinal),
-      gear: clampBipolar(values[2]),
-    };
-  },
-  encode: (action) => [
-    clampBipolar(action.steer), clampUnit(action.throttle) - clampUnit(action.brake), clampBipolar(action.gear),
-  ],
+  decode: (values) => ({ steer: clampBipolar(values[0]), longitudinal: clampBipolar(values[1]) }),
+  encode: (action) => [clampBipolar(action.steer), clampBipolar(action.longitudinal)],
 };
 
+/**
+ * Fixed New Santana exam-car geometry in metres. Body length/width/wheelbase
+ * describe one vehicle generation; the axle offsets keep the rendered body,
+ * wheel contacts, collision rectangle and kinematic reference point aligned.
+ */
 export const SUBJECT2_VEHICLE = {
   length: 4.473,
   width: 1.706,
-  wheelBase: 2.548,
-  trackWidth: 1.414,
+  wheelBase: 2.603,
+  frontOverhang: .852,
+  rearOverhang: 1.018,
+  frontAxleToCenter: 1.3845,
+  rearAxleToCenter: 1.2185,
+  frontTrackWidth: 1.46,
+  rearTrackWidth: 1.50,
   timeStep: .1,
-  maxSteerRadians: .58,
+  maxSteerRadians: .583,
   maxForwardSpeed: 4,
   maxReverseSpeed: -2.5,
   forwardAcceleration: 2.2,
   reverseAcceleration: 1.7,
   serviceBrakeDeceleration: 6,
   rollingDrag: .45,
-  throttleResponsePerSecond: 3,
-  brakeResponsePerSecond: 5,
   steeringResponsePerSecond: 4,
   gravity: 9.80665,
+  longitudinalDeadband: .04,
 } as const;
 
 /** Minimum service-brake command for an idling vehicle aligned uphill. */
@@ -76,8 +71,20 @@ export function minimumServiceBrakeForStaticHold(grade: number): number {
 
 export function createSubject2Vehicle(values: Pick<Subject2VehicleState, "x" | "y" | "heading"> & Partial<Subject2VehicleState>): Subject2VehicleState {
   return {
-    speed: 0, steer: 0, throttle: 0, brake: 0,
-    gear: 1, acceleration: 0, isBrakeHolding: false, ...values,
+    speed: 0,
+    steer: 0,
+    longitudinalIntent: 0,
+    driveDirection: 0,
+    acceleration: 0,
+    isBrakeHolding: false,
+    ...values,
+  };
+}
+
+export function subject2RearAxlePoint(vehicle: Pick<Subject2VehicleState, "x" | "y" | "heading">): { x: number; y: number } {
+  return {
+    x: vehicle.x - Math.cos(vehicle.heading) * SUBJECT2_VEHICLE.rearAxleToCenter,
+    y: vehicle.y - Math.sin(vehicle.heading) * SUBJECT2_VEHICLE.rearAxleToCenter,
   };
 }
 
@@ -85,63 +92,110 @@ function approach(current: number, target: number, maximumDelta: number): number
   return current + Math.max(-maximumDelta, Math.min(maximumDelta, target - current));
 }
 
-export function advanceSubject2Vehicle(state: Subject2VehicleState, action: Subject2Action, physics: Subject2PhysicsContext = {}): Subject2VehicleState {
-  const steerCommand = Math.max(-1, Math.min(1, Number.isFinite(action.steer) ? action.steer : 0));
-  let throttleCommand = Math.max(0, Math.min(1, Number.isFinite(action.throttle) ? action.throttle : 0));
-  const brakeCommand = Math.max(0, Math.min(1, Number.isFinite(action.brake) ? action.brake! : 0));
-  // Automatic transmission: accelerator and service brake are one mutually
-  // exclusive longitudinal control. Direct callers that request both get
-  // brake priority, matching the safer physical interpretation.
-  if (brakeCommand > 0) throttleCommand = 0;
-  const requestedGear: -1 | 0 | 1 = !Number.isFinite(action.gear) ? state.gear : action.gear! < -.25 ? -1 : action.gear! > .25 ? 1 : 0;
-  const steer = approach(state.steer, steerCommand, SUBJECT2_VEHICLE.steeringResponsePerSecond * SUBJECT2_VEHICLE.timeStep);
-  let throttle: number;
-  let brake: number;
-  if (brakeCommand > 0 && state.throttle > 0) {
-    throttle = approach(state.throttle, 0, SUBJECT2_VEHICLE.throttleResponsePerSecond * SUBJECT2_VEHICLE.timeStep);
-    brake = 0;
-  } else if (throttleCommand > 0 && state.brake > 0) {
-    brake = approach(state.brake, 0, SUBJECT2_VEHICLE.brakeResponsePerSecond * SUBJECT2_VEHICLE.timeStep);
-    throttle = 0;
-  } else {
-    throttle = approach(state.throttle, throttleCommand, SUBJECT2_VEHICLE.throttleResponsePerSecond * SUBJECT2_VEHICLE.timeStep);
-    brake = approach(state.brake, brakeCommand, SUBJECT2_VEHICLE.brakeResponsePerSecond * SUBJECT2_VEHICLE.timeStep);
+function directionOf(value: number): -1 | 0 | 1 {
+  return value < 0 ? -1 : value > 0 ? 1 : 0;
+}
+
+export function advanceSubject2Vehicle(
+  state: Subject2VehicleState,
+  action: Subject2Action,
+  physics: Subject2PhysicsContext = {},
+): Subject2VehicleState {
+  const steerCommand = clampBipolar(action.steer);
+  const longitudinalIntent = clampBipolar(action.longitudinal);
+  const intentDirection = Math.abs(longitudinalIntent) <= SUBJECT2_VEHICLE.longitudinalDeadband
+    ? 0
+    : directionOf(longitudinalIntent);
+  const steer = approach(
+    state.steer,
+    steerCommand,
+    SUBJECT2_VEHICLE.steeringResponsePerSecond * SUBJECT2_VEHICLE.timeStep,
+  );
+
+  const wasStopped = Math.abs(state.speed) <= .001;
+  let driveDirection: -1 | 0 | 1 = wasStopped ? state.driveDirection : directionOf(state.speed);
+  let isBrakeHolding = wasStopped && state.isBrakeHolding;
+
+  if (wasStopped) {
+    if (isBrakeHolding) {
+      const continuedBrake = intentDirection !== 0
+        && directionOf(state.longitudinalIntent) === intentDirection;
+      if (intentDirection === 0) {
+        driveDirection = 0;
+        isBrakeHolding = false;
+      }
+      else if (!continuedBrake) {
+        driveDirection = intentDirection;
+        isBrakeHolding = false;
+      }
+    } else if (intentDirection !== 0) driveDirection = intentDirection;
+    else driveDirection = 0;
   }
-  const gear = Math.abs(state.speed) <= .15 ? requestedGear : state.gear;
-  const driveAcceleration = gear === 0 ? 0 : gear * throttle
-    * (gear > 0 ? SUBJECT2_VEHICLE.forwardAcceleration : SUBJECT2_VEHICLE.reverseAcceleration);
+
+  const movingDirection = directionOf(state.speed);
+  const requestsBrake = !wasStopped && intentDirection !== 0 && intentDirection !== movingDirection;
+  const requestsDrive = intentDirection !== 0 && !isBrakeHolding
+    && (wasStopped ? intentDirection === driveDirection : intentDirection === movingDirection);
+  const driveAcceleration = requestsDrive
+    ? intentDirection * Math.abs(longitudinalIntent)
+      * (intentDirection > 0 ? SUBJECT2_VEHICLE.forwardAcceleration : SUBJECT2_VEHICLE.reverseAcceleration)
+    : 0;
+  const brakeCapacity = isBrakeHolding
+    ? SUBJECT2_VEHICLE.serviceBrakeDeceleration
+    : requestsBrake ? Math.abs(longitudinalIntent) * SUBJECT2_VEHICLE.serviceBrakeDeceleration : 0;
+
   const grade = Math.max(-.3, Math.min(.3, physics.grade ?? 0));
   const slopeAngle = Math.atan(grade);
   const uphillHeading = physics.uphillHeading ?? state.heading;
-  const gradeAcceleration = -SUBJECT2_VEHICLE.gravity * Math.sin(slopeAngle) * Math.cos(normalizeAngle(state.heading - uphillHeading));
+  const gradeAcceleration = -SUBJECT2_VEHICLE.gravity * Math.sin(slopeAngle)
+    * Math.cos(normalizeAngle(state.heading - uphillHeading));
   const baseAcceleration = driveAcceleration + gradeAcceleration;
-  const brakeCapacity = brake * SUBJECT2_VEHICLE.serviceBrakeDeceleration;
-  const rollingResistance = throttle < .02 ? SUBJECT2_VEHICLE.rollingDrag : 0;
+  const rollingResistance = requestsDrive ? 0 : SUBJECT2_VEHICLE.rollingDrag;
   const totalResistance = brakeCapacity + rollingResistance;
+
   let rawSpeed: number;
-  if (Math.abs(state.speed) <= .001) {
+  if (wasStopped) {
     rawSpeed = Math.abs(baseAcceleration) <= totalResistance
       ? 0
       : (baseAcceleration - Math.sign(baseAcceleration) * totalResistance) * SUBJECT2_VEHICLE.timeStep;
   } else {
     const effectiveAcceleration = baseAcceleration - Math.sign(state.speed) * totalResistance;
     rawSpeed = state.speed + effectiveAcceleration * SUBJECT2_VEHICLE.timeStep;
-    if (Math.sign(rawSpeed) !== Math.sign(state.speed) && totalResistance >= Math.abs(baseAcceleration)) rawSpeed = 0;
+    if (directionOf(rawSpeed) !== movingDirection) {
+      rawSpeed = 0;
+      if (requestsBrake) {
+        isBrakeHolding = true;
+        driveDirection = movingDirection;
+      } else driveDirection = 0;
+    }
   }
+
   const speed = Math.max(SUBJECT2_VEHICLE.maxReverseSpeed, Math.min(SUBJECT2_VEHICLE.maxForwardSpeed, rawSpeed));
+  if (!wasStopped && speed === 0 && requestsBrake) isBrakeHolding = true;
+  if (speed !== 0) {
+    isBrakeHolding = false;
+    driveDirection = directionOf(speed);
+  }
   const acceleration = (speed - state.speed) / SUBJECT2_VEHICLE.timeStep;
-  const isBrakeHolding = speed === 0 && brakeCapacity > 0 && brakeCapacity >= Math.abs(baseAcceleration);
+
   const averageSpeed = (state.speed + speed) / 2;
   const steerAngle = steer * SUBJECT2_VEHICLE.maxSteerRadians;
   const headingDelta = averageSpeed / SUBJECT2_VEHICLE.wheelBase * Math.tan(steerAngle) * SUBJECT2_VEHICLE.timeStep;
   const midpointHeading = state.heading + headingDelta / 2;
   const heading = normalizeAngle(state.heading + headingDelta);
+  const rearAxle = subject2RearAxlePoint(state);
+  const rearX = rearAxle.x + Math.cos(midpointHeading) * averageSpeed * SUBJECT2_VEHICLE.timeStep;
+  const rearY = rearAxle.y + Math.sin(midpointHeading) * averageSpeed * SUBJECT2_VEHICLE.timeStep;
+
   return {
-    x: state.x + Math.cos(midpointHeading) * averageSpeed * SUBJECT2_VEHICLE.timeStep,
-    y: state.y + Math.sin(midpointHeading) * averageSpeed * SUBJECT2_VEHICLE.timeStep,
+    x: rearX + Math.cos(heading) * SUBJECT2_VEHICLE.rearAxleToCenter,
+    y: rearY + Math.sin(heading) * SUBJECT2_VEHICLE.rearAxleToCenter,
     heading,
     speed,
     steer,
-    throttle, brake, gear, acceleration, isBrakeHolding,
+    longitudinalIntent,
+    driveDirection,
+    acceleration,
+    isBrakeHolding,
   };
 }

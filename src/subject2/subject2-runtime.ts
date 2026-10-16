@@ -16,7 +16,7 @@ export type Subject2CompletedTerminalReason = Exclude<Subject2TerminalReason, nu
 export type Subject2TerminationCounts = Record<Subject2CompletedTerminalReason, number>;
 
 export interface Subject2RuntimeCheckpoint {
-  readonly version: 2;
+  readonly version: 3;
   readonly mode: Subject2Mode;
   readonly stepCount: number;
   readonly episode: number;
@@ -132,7 +132,7 @@ export class Subject2TrainingRuntime {
   private episodeReward = 0;
   private criticLoss: number | null = null;
   private actorLoss: number | null = null;
-  private lastAction: Subject2Action = { steer: 0, throttle: 0, brake: 0, gear: 1 };
+  private lastAction: Subject2Action = { steer: 0, longitudinal: 0 };
   private lastReward = 0;
   private lastRewardBreakdown = EMPTY_REWARD;
   private lastCheckpointReached = false;
@@ -244,7 +244,7 @@ export class Subject2TrainingRuntime {
 
   exportCheckpoint(): Subject2RuntimeCheckpoint {
     return {
-      version: 2,
+      version: 3,
       mode: this.mode,
       stepCount: this.stepCount,
       episode: this.episode,
@@ -267,7 +267,7 @@ export class Subject2TrainingRuntime {
   }
 
   importCheckpoint(checkpoint: Subject2RuntimeCheckpoint): void {
-    if (checkpoint.version !== 2 || checkpoint.trainingProjectIndex < 0 || checkpoint.trainingProjectIndex >= SUBJECT2_PROJECT_ORDER.length) {
+    if (checkpoint.version !== 3 || checkpoint.trainingProjectIndex < 0 || checkpoint.trainingProjectIndex >= SUBJECT2_PROJECT_ORDER.length) {
       throw new RangeError("科目二模型存档版本或项目位置不兼容。");
     }
     const trainingScope = checkpoint.trainingScope ?? "rotation";
@@ -299,7 +299,7 @@ export class Subject2TrainingRuntime {
     this.terminationCounts = structuredClone(checkpoint.terminationCounts);
     this.explorationOptionCounts = structuredClone(explorationOptionCounts);
     this.episodeReward = 0;
-    this.lastAction = { steer: 0, throttle: 0, brake: 0, gear: 1 };
+    this.lastAction = { steer: 0, longitudinal: 0 };
     this.lastReward = 0;
     this.lastRewardBreakdown = EMPTY_REWARD;
     this.lastCheckpointReached = false;

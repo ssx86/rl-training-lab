@@ -19,8 +19,8 @@ export function subject2FrontWheelContactPoints(vehicle: Subject2VehicleState): 
   const forward = { x: Math.cos(vehicle.heading), y: Math.sin(vehicle.heading) };
   const right = { x: -Math.sin(vehicle.heading), y: Math.cos(vehicle.heading) };
   return [-1, 1].map((side) => ({
-    x: vehicle.x + forward.x * SUBJECT2_VEHICLE.wheelBase / 2 + right.x * SUBJECT2_VEHICLE.trackWidth / 2 * side,
-    y: vehicle.y + forward.y * SUBJECT2_VEHICLE.wheelBase / 2 + right.y * SUBJECT2_VEHICLE.trackWidth / 2 * side,
+    x: vehicle.x + forward.x * SUBJECT2_VEHICLE.frontAxleToCenter + right.x * SUBJECT2_VEHICLE.frontTrackWidth / 2 * side,
+    y: vehicle.y + forward.y * SUBJECT2_VEHICLE.frontAxleToCenter + right.y * SUBJECT2_VEHICLE.frontTrackWidth / 2 * side,
   }));
 }
 

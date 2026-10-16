@@ -14,7 +14,7 @@ interface Props {
   readonly backend: string;
 }
 
-const DEFAULT_MODEL = describeTd3Config({ observationSize: 57, actionSize: 3, hiddenUnits: 128 });
+const DEFAULT_MODEL = describeTd3Config({ observationSize: 57, actionSize: 2, hiddenUnits: 128 });
 const rewardRows = [
   ["通用目标进步", "poseProgress"], ["接近车位", "bayApproachProgress"], ["姿态对正", "bayAlignmentProgress"], ["车身入库", "bayOverlapProgress"], ["过程条件", "checkpoint"], ["全程通过", "passBonus"],
   ["每步时间", "timeCost"], ["停滞", "inactivity"], ["方向错误", "wrongDirection"],
@@ -55,7 +55,7 @@ export function Subject2LearningPanel({ snapshot, history, backend }: Props) {
               </LineChart></ResponsiveContainer> : <div className="grid h-full place-items-center text-center text-xs text-muted-foreground">开始训练后显示最近 180 个抽样步<br />橙：总奖励 · 绿：进步 · 红：惩罚</div>}
             </div>
             <p className="mt-2 text-[10px] text-muted-foreground">绿线汇总通用目标、接近车位、姿态对正、车身入库和稳定保持；蓝线是过程完成率（右轴 0–100%）。</p>
-            <div className="mt-3 grid gap-px overflow-hidden rounded-control border bg-border sm:grid-cols-3 lg:grid-cols-6"><Stat label="当前步奖励" value={(snapshot?.reward ?? 0).toFixed(3)} /><Stat label="本回合累计" value={(snapshot?.episodeReward ?? 0).toFixed(1)} /><Stat label="曲线样本" value={`${history.length} / 180`} /><Stat label="近 60 步油门" value={`${controls.throttlePercent}%`} /><Stat label="近 60 步制动" value={`${controls.brakePercent}%`} /><Stat label="近 60 步静止" value={`${controls.stationaryPercent}%`} /></div>
+            <div className="mt-3 grid gap-px overflow-hidden rounded-control border bg-border sm:grid-cols-3 lg:grid-cols-6"><Stat label="当前步奖励" value={(snapshot?.reward ?? 0).toFixed(3)} /><Stat label="本回合累计" value={(snapshot?.episodeReward ?? 0).toFixed(1)} /><Stat label="曲线样本" value={`${history.length} / 180`} /><Stat label="近 60 步驱动意图" value={`${controls.throttlePercent}%`} /><Stat label="近 60 步制动意图" value={`${controls.brakePercent}%`} /><Stat label="近 60 步静止" value={`${controls.stationaryPercent}%`} /></div>
           </TabsContent>
 
           <TabsContent value="reward">
@@ -73,9 +73,9 @@ export function Subject2LearningPanel({ snapshot, history, backend }: Props) {
 
           <TabsContent value="model">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-4 text-xs leading-5"><div><h3 className="font-semibold">现在用的不是表格 Q-learning，而是 TD3</h3><p className="mt-1 text-muted-foreground">TD3（Twin Delayed Deep Deterministic Policy Gradient）适合连续控制。自动挡 Actor 看见 {model.observationSize} 个观测值，输出方向、纵向踏板轴和 D/N/R 挡位 {model.actionSize} 个连续量；踏板轴正值映射油门、负值映射制动，所以两者不会同时踩下。</p></div>
+              <div className="space-y-4 text-xs leading-5"><div><h3 className="font-semibold">现在用的不是表格 Q-learning，而是 TD3</h3><p className="mt-1 text-muted-foreground">TD3（Twin Delayed Deep Deterministic Policy Gradient）适合连续控制。自动挡 Actor 看见 {model.observationSize} 个观测值，只输出转向和带符号纵向意图 {model.actionSize} 个连续量。车辆运动中，同号意图加速、异号意图制动；速度归零后才能选择相反方向。</p></div>
                 <Formula>Actor：{model.observationSize} → {model.hiddenUnits} ReLU → {model.hiddenUnits} ReLU → {model.actionSize} tanh</Formula><Formula>双 Critic：({model.observationSize} + {model.actionSize}) → {model.hiddenUnits} ReLU → {model.hiddenUnits} ReLU → 1 × 2</Formula>
-                <div className="grid gap-3 sm:grid-cols-2"><Theory title="57 维观测">32 束雷达 · 相对目标与车辆状态 · 5 类科目 one-hot · 4 阶段 one-hot</Theory><Theory title="自动挡动作">转向 · 互斥油门/制动轴 · D/N/R 挡位</Theory></div>
+                <div className="grid gap-3 sm:grid-cols-2"><Theory title="57 维观测">32 束雷达 · 相对目标与车辆状态 · 5 类科目 one-hot · 4 阶段 one-hot</Theory><Theory title="自动挡动作">转向 · 带符号纵向意图</Theory></div>
                 <div className="grid gap-3 sm:grid-cols-2"><Theory title="如何探索动作">aₜ = πθ(sₜ) + ε；未覆盖状态用 UCB 选择持续动作</Theory><Theory title="Critic 学习目标">y = r + γ(1−done) min(Q′₁, Q′₂)</Theory><Theory title="Critic 损失">L = Huber(Q − y)</Theory><Theory title="Actor 目标">最大化 E[Q₁(s, πθ(s))]</Theory></div>
                 <p className="border-l-2 border-primary pl-3 text-muted-foreground">双 Critic 取较小值，抑制价值高估；Actor 每 2 次 Critic 更新才更新一次；目标网络用 τ={model.tau} 缓慢追随，提升训练稳定性。</p>
                 <p className="border-l-2 border-[#2d65a8] pl-3 text-muted-foreground">训练时会按“静止且制动、静止已松刹、前进、倒车”统计覆盖次数，并用 UCB 优先尝试尚未充分覆盖的起步、前进调整、制动或滑行选项。每个选项会持续 0.6–约 2.4 秒，让车辆真正完成松刹、起步、修正或停车。UCB 只决定训练期探索哪个动作选项，不加入考试奖励；评估模式完全关闭探索。</p>
