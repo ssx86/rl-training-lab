@@ -8,7 +8,7 @@ HEAD 72f5adb (master = origin/master, 2026-10-13)。状态：已发布（CHANGEL
 | 文件夹 | 文件数 | 模式 | 摘要 |
 |---|---|---|---|
 | (root) | 18 | per-file | [root.md](folders/root.md) — 8 份设计/审计/原型文档 + 10 配置 |
-| .github/workflows · .goal · .done · docs · scripts · skills · tasks | 9 | per-file | [infrastructure.md](folders/infrastructure.md) — CI、实时任务方案、完成方案归档、方法论文档、OSM 生成脚本、agent 技能、已完结任务清单 |
+| .github/workflows · .goal · .done · docs · scripts · skills · tasks | 10 | per-file | [infrastructure.md](folders/infrastructure.md) — CI、实时任务方案、完成方案归档、方法论文档、OSM 生成脚本、agent 技能、已完结任务清单 |
 | src（根）· src/catalog · src/exercise · src/lib · src/simulation · src/test | 11 | per-file | [src-core.md](folders/src-core.md) — 入口、实验目录单一事实源、练习入口、几何工具 |
 | src/domain | 10 | per-file | [domain.md](folders/domain.md) — 峡谷表格型 RL 领域层 + 通用环境适配契约 |
 | src/components（5 组） | 32 | per-file | [components.md](folders/components.md) — 通用面板 + driving/learning/subject2 组件 + ui 原语 |
