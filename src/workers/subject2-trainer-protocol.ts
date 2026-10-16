@@ -10,6 +10,23 @@ export function subject2Cadence(speed: Subject2TrainingSpeed): { stepsPerBatch: 
   return { stepsPerBatch: 1, delayMs: 100 / speed };
 }
 
+/** Wall-clock interpolation window for the visible vehicle. MAX intentionally samples. */
+export function subject2DisplayInterpolationMs(speed: Subject2TrainingSpeed): number {
+  if (speed === "max") return 0;
+  if (speed === 16) return 1_000 / 60;
+  return 100 / speed;
+}
+
+/** Capped modes publish every physics batch; only MAX throttles visible snapshots. */
+export function shouldPublishSubject2Snapshot(
+  speed: Subject2TrainingSpeed,
+  lastPublishedAt: number,
+  now: number,
+  maxSampleIntervalMs = 100,
+): boolean {
+  return speed !== "max" || now - lastPublishedAt >= maxSampleIntervalMs;
+}
+
 export function shouldAutoCheckpoint(lastSavedStep: number, currentStep: number, interval = 1_000): boolean {
   return currentStep - lastSavedStep >= interval;
 }

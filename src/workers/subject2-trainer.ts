@@ -2,7 +2,7 @@
 
 import * as tf from "@tensorflow/tfjs";
 import { Subject2TrainingRuntime, type Subject2Mode } from "@/subject2/subject2-runtime";
-import { shouldAutoCheckpoint, subject2Cadence, type Subject2Command, type Subject2Envelope, type Subject2Payload, type Subject2TrainingSpeed } from "./subject2-trainer-protocol";
+import { shouldAutoCheckpoint, shouldPublishSubject2Snapshot, subject2Cadence, type Subject2Command, type Subject2Envelope, type Subject2Payload, type Subject2TrainingSpeed } from "./subject2-trainer-protocol";
 
 tf.enableProdMode();
 const scope: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
@@ -17,6 +17,7 @@ let stepsPerSecond = 0;
 let lastMetricStep = 0;
 let lastMetricTime = performance.now();
 let lastCheckpointStep = 0;
+let lastSnapshotTime = 0;
 
 function post(payload: Subject2Payload): void {
   const envelope: Subject2Envelope = { schemaVersion: "subject2-v1", sequence: sequence++, payload };
@@ -44,7 +45,10 @@ async function pump(token: number): Promise<void> {
         lastMetricStep = snapshot.step;
         lastMetricTime = now;
       }
-      post({ type: "snapshot", snapshot, metrics: { backend, stepsPerSecond } });
+      if (shouldPublishSubject2Snapshot(speed, lastSnapshotTime, now)) {
+        post({ type: "snapshot", snapshot, metrics: { backend, stepsPerSecond } });
+        lastSnapshotTime = now;
+      }
       if (shouldAutoCheckpoint(lastCheckpointStep, snapshot.step)) postCheckpoint("auto");
       await new Promise((resolve) => setTimeout(resolve, cadence.delayMs));
     }
@@ -68,6 +72,7 @@ async function start(command: Extract<Subject2Command, { type: "start" }>): Prom
   generation += 1;
   lastMetricStep = 0;
   lastMetricTime = performance.now();
+  lastSnapshotTime = lastMetricTime;
   lastCheckpointStep = runtime.snapshot().step;
   post({ type: "snapshot", snapshot: runtime.snapshot(), metrics: { backend, stepsPerSecond } });
   post({ type: "status", status: running ? "running" : "paused" });

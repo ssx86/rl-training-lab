@@ -4,7 +4,7 @@ import type { Subject2Project } from "@/subject2/subject2-course";
 import { hasLegacySubject2Checkpoint, loadSubject2Checkpoint, saveSubject2Checkpoint, type StoredSubject2Checkpoint } from "@/subject2/subject2-checkpoint-store";
 import { interpolateSubject2Vehicle } from "@/subject2/subject2-display";
 import type { Subject2VehicleState } from "@/subject2/subject2-vehicle";
-import type { Subject2Command, Subject2Envelope, Subject2RuntimeMetrics, Subject2TrainingSpeed } from "@/workers/subject2-trainer-protocol";
+import { subject2DisplayInterpolationMs, type Subject2Command, type Subject2Envelope, type Subject2RuntimeMetrics, type Subject2TrainingSpeed } from "@/workers/subject2-trainer-protocol";
 
 export interface Subject2HistoryPoint {
   readonly step: number;
@@ -30,6 +30,7 @@ export function useSubject2Lab() {
   const workerRef = useRef<Worker | null>(null);
   const latestRef = useRef<Subject2Snapshot | null>(null);
   const renderedVehicleRef = useRef<Subject2VehicleState | null>(null);
+  const renderedSnapshotRef = useRef<Subject2Snapshot | null>(null);
   const transitionRef = useRef<{ from: Subject2VehicleState; to: Subject2VehicleState; startedAt: number; duration: number } | null>(null);
   const speedRef = useRef<Subject2TrainingSpeed>(1);
   const historyRef = useRef<Subject2HistoryPoint[]>([]);
@@ -67,7 +68,7 @@ export function useSubject2Lab() {
         setSelectedProject(next.selectedProject);
         const previous = latestRef.current;
         const shouldSnap = !previous || previous.episode !== next.episode || previous.scenario.id !== next.scenario.id;
-        const duration = speedRef.current === 1 ? 100 : speedRef.current === 4 ? 25 : 0;
+        const duration = subject2DisplayInterpolationMs(speedRef.current);
         const from = shouldSnap ? next.vehicle : renderedVehicleRef.current ?? previous?.vehicle ?? next.vehicle;
         transitionRef.current = { from, to: next.vehicle, startedAt: performance.now(), duration };
         latestRef.current = next;
@@ -111,16 +112,18 @@ export function useSubject2Lab() {
 
   useEffect(() => {
     let frame = 0;
-    let last = 0;
     const render = (time: number) => {
-      if (time - last >= 1000 / 30 && latestRef.current) {
+      if (latestRef.current) {
         const transition = transitionRef.current;
         const progress = !transition || transition.duration === 0 ? 1 : (time - transition.startedAt) / transition.duration;
         const vehicle = transition ? interpolateSubject2Vehicle(transition.from, transition.to, progress) : latestRef.current.vehicle;
-        renderedVehicleRef.current = vehicle;
-        setSnapshot({ ...latestRef.current, vehicle });
-        setRewardHistory(historyRef.current);
-        last = time;
+        const isSampledFrame = transition?.duration === 0;
+        if (!isSampledFrame || renderedSnapshotRef.current !== latestRef.current) {
+          renderedVehicleRef.current = vehicle;
+          renderedSnapshotRef.current = latestRef.current;
+          setSnapshot({ ...latestRef.current, vehicle });
+          setRewardHistory(historyRef.current);
+        }
       }
       frame = requestAnimationFrame(render);
     };
