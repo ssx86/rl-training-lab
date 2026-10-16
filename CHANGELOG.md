@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.4.1 — 2026-10-16
+
+### Fixed
+
+- Replaced the nearly invisible combined reverse-parking pose signal with an
+  explicit reward hierarchy: small distance progress, smaller heading
+  alignment, and a much stronger exact vehicle-body overlap increment.
+- Allowed temporary forward correction in parking tasks without awarding a
+  pass unless the final fully contained, low-speed pose is reached in reverse.
+- Added a separately covered forward-adjustment option to UCB exploration so
+  recovery manoeuvres can enter replay instead of remaining practically
+  unreachable.
+
+### Changed
+
+- Exposed approach, alignment, and body-overlap reward terms separately in the
+  live ledger, chart aggregation, formulas, and teaching explanation.
+
+### Verification
+
+- 234 automated tests across 53 files, ESLint, TypeScript, and production build.
+- Real-browser checks at 1440px and 390px confirmed readable formulas, no
+  horizontal overflow, successful training startup, and no console errors.
+
 ## 1.4.0 — 2026-10-15
 
 ### Changed
