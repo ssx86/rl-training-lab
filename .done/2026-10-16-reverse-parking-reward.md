@@ -1,6 +1,7 @@
 ---
-status: in_progress
+status: completed
 started: 2026-10-16
+completed: 2026-10-16
 scope: subject2-reverse-parking-reward
 ---
 
@@ -38,3 +39,11 @@ scope: subject2-reverse-parking-reward
 - 车位任务短暂前进调整不触发方向错误惩罚；最终正向进入仍不能判定通过。
 - UCB 能覆盖车位任务的前进调整选项。
 - 专项测试、全量测试、lint、构建和真实浏览器训练检查通过后发布。
+
+## 完成证据
+
+- 39 项奖励、环境和探索专项测试通过；全量 234 项测试通过。
+- ESLint、TypeScript 与 Vite 生产构建通过。
+- 1440px 与 390px 本地和公开页面均无横向溢出或控制台错误。
+- GitHub Actions run `38889922149` 的测试、审计、构建与 Pages 部署全部成功。
+- 公开 `v1.4.1` 页面出现新奖励公式并能启动训练，Replay 增长到 29。
